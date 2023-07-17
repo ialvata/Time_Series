@@ -120,6 +120,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.env_TimeSeries
 .env
 .venv
 env/
