@@ -1,4 +1,5 @@
 from statsmodels.tsa.stattools import adfuller, kpss
+import pandas as pd
 
 # taken from https://www.statsmodels.org/devel/examples/notebooks/generated/stationarity_detrending_adf_kpss.html
 def adf_test(timeseries):
