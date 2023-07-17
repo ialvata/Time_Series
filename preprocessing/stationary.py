@@ -12,16 +12,21 @@ from pipeline_input_base import PipelineInput
 
 class StationaryInput(PipelineInput):
     def __init__(self, path_to_data: Path, 
-                 train_prop: float, alpha:float):
+                 train_prop: float = 0.8, alpha:float = 0.05):
         """
         alpha
             This parameter determines the test size we're willing 
             to accept a type-I error
         """
-        self.dataframe :pd.DataFrame = self.fetch_data(path=path_to_data)
-        test_rows = 1 - int(train_prop * self.dataframe.shape[0])
-        self.test:pd.DataFrame = self.dataframe.iloc[-test_rows:]
-        self.dataframe = self.dataframe.iloc[:test_rows]
+        self._dataframe :pd.DataFrame = self.fetch_data(path=path_to_data)
+        test_rows = 1 - int(train_prop * self._dataframe.shape[0])
+        self.test:pd.DataFrame = self._dataframe.iloc[-test_rows:]
+        self._dataframe = self._dataframe.iloc[:test_rows]
+        self.alpha = alpha
+    
+    @property
+    def dataframe(self):
+        return self._dataframe
 
 class Stationary(PreprocessPipeline):
     """
