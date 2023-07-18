@@ -9,7 +9,7 @@ class PipelineInput(ABC):
 
     @property
     @abstractmethod
-    def dataframe(self):
+    def dataframe(self)-> pd.DataFrame:
         pass
     
     def fetch_data(self, path:Path)-> pd.DataFrame:

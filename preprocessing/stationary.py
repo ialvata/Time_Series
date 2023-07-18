@@ -5,9 +5,9 @@ import numpy as np
 from pathlib import Path
 from scipy import stats
 from stat_tests.trend_stationarity import adf_test,kpss_test
-from transformations_base import Transformation
-from pipeline_base import PreprocessPipeline
-from pipeline_input_base import PipelineInput
+from preprocessing.transformations_base import Transformation
+from preprocessing.pipeline_base import PreprocessPipeline
+from preprocessing.pipeline_input_base import PipelineInput
 
 
 class StationaryInput(PipelineInput):

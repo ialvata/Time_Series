@@ -3,8 +3,8 @@ from  abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
-from transformations_base import Transformation
-from pipeline_input_base import PipelineInput
+from preprocessing.transformations_base import Transformation
+from preprocessing.pipeline_input_base import PipelineInput
 
 
 class PreprocessPipeline(ABC):
@@ -13,7 +13,7 @@ class PreprocessPipeline(ABC):
         self.input = input
 
     @property  
-    def dataframe(self):
+    def dataframe(self)->pd.DataFrame:
         return self.input.dataframe
     
     def add_transformation_to_pipeline(self,transformation:Transformation):
