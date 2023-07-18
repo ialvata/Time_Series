@@ -2,10 +2,10 @@ from  abc import ABC, abstractmethod
 from pathlib import Path
 import pandas as pd
 
-class PipelineInput(ABC):
-    @abstractmethod
-    def __init__(self):
-        pass
+class PreprocessInput(ABC):
+    
+    def __init__(self,path_to_data):
+        self._dataframe :pd.DataFrame = self.fetch_data(path=path_to_data)
 
     @property
     @abstractmethod

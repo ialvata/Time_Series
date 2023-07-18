@@ -4,20 +4,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 from preprocessing.transformations_base import Transformation
-from preprocessing.pipeline_input_base import PipelineInput
+from preprocessing.preprocess_input_base import PreprocessInput
 
 
-class PreprocessPipeline(ABC):
-    def __init__(self, input:PipelineInput):
+class Preprocess(ABC):
+    def __init__(self, input:PreprocessInput):
         self.pipeline = []
         self.input = input
 
     @property  
     def dataframe(self)->pd.DataFrame:
         return self.input.dataframe
-    
-    def add_transformation_to_pipeline(self,transformation:Transformation):
-        self.pipeline.append(transformation)
+    @abstractmethod
+    def clean_dataframe(self):
+        pass
 
     def add_lags(self, df:pd.DataFrame, n_lags:int|list[int], drop_cols:list)-> pd.DataFrame:
         """
