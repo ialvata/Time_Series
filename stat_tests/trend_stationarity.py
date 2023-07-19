@@ -2,7 +2,12 @@ from statsmodels.tsa.stattools import adfuller, kpss
 import pandas as pd
 
 # taken from https://www.statsmodels.org/devel/examples/notebooks/generated/stationarity_detrending_adf_kpss.html
-def adf_test(timeseries, print_flag:bool = False):
+def adf_test(timeseries:pd.DataFrame, print_flag:bool = False):
+    """
+    Augmented Dickey-Fuller unit root test
+        H0: Presence of a unit root 
+        H1: No unit root (trend stationarity)
+    """
     dftest = adfuller(timeseries, autolag="AIC")
     if print_flag:
         print("Results of Dickey-Fuller Test:")

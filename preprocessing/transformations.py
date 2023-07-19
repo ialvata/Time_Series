@@ -1,12 +1,14 @@
 from preprocessing.stationary import Stationary
 from preprocessing.transformations_base import Transformation
 import pandas as pd
-from scipy.special import boxcox, inv_boxcox
+from scipy.special import inv_boxcox
+from scipy.stats import boxcox
 from typing import Callable
 
         
 
 class Difference(Transformation):
+
     _type = "Difference"
     
     def __init__(self, periods:int, stationary:Stationary | None = None):
@@ -27,7 +29,7 @@ class Difference(Transformation):
         else:
             print("You should first associate a stationary pipeline to this transformation") 
 
-    def invert(self, dataframe_diff:pd.DataFrame, 
+    def invert(self, transformed_df:pd.DataFrame, 
                initial_rows:pd.DataFrame | None = None):
         """
         The dataframe_diff column names must be a subset of Stationary dataframe
@@ -36,13 +38,13 @@ class Difference(Transformation):
         if self.stationary is not None:
             periods = self.parameters["periods"]
             columns_indices:list = self.stationary.input.dataframe.columns.get_indexer(
-                dataframe_diff.columns
+                transformed_df.columns
             )
             if initial_rows is None:
                 initial_rows = self.stationary.input.dataframe.iloc[:periods,columns_indices]
-            concat_df:pd.DataFrame = pd.concat([initial_rows, dataframe_diff])
+            concat_df:pd.DataFrame = pd.concat([initial_rows, transformed_df])
             num_rows = concat_df.shape[0]
-            for column in dataframe_diff.columns:
+            for column in transformed_df.columns:
                 concat_col_values = concat_df[column].values
                 # initial inverted values come from initial dataframe rows.
                 inverted_values = initial_rows.values.flatten().tolist()
@@ -54,65 +56,62 @@ class Difference(Transformation):
         else:
             print("You should first associate a stationary pipeline to this transformation")
 
+class BoxCox(Transformation):
 
+    _type = "BoxCox"
 
-
-
-
-# class BoxCoxTrans(Transformation):
-#     _type = "BoxCox"
-#     def __init__(self, 
-#                  stationary:Stationary | None = None, 
-#                  lambda_par:float | None = None,
-#                  alpha: float | None = None):
-#         self._parameters = {
-#             "lambda":lambda_par,
-#             "alpha":alpha
-#         }
-#         self.stationary = stationary
+    def __init__(self, 
+                 stationary:Stationary | None = None, 
+                 lambda_par:float | dict[str,float] | None = None,
+                 alpha: float | None = None):
+        self._parameters = {
+            "lambda":lambda_par,
+            "alpha":alpha
+        }
+        self.stationary = stationary
 
         
-#     def apply(self, 
-#               columns: list[str]) -> pd.DataFrame | None:
-#         """
-#         lambda : {None, scalar}, optional
-#             If lmbda is not None, do the transformation for that value. 
-#             If lmbda is None, find the lambda that maximizes the log-likelihood 
-#                 function and return it as the second output argument.
-#         """
-#         dict_lambda={}
-#         transf_dataframe=pd.DataFrame()
-#         if self.stationary is not None:
-#             for column in columns:
-#                 box_cox_data, lambda_par = boxcox(
-#                     self.stationary.input.dataframe[column].values,
-#                     lambda
-#                 )
-#                 transf_dataframe[column]= box_cox_data
-#                 dict_lambda[column]=lambda_par
-#             self._parameters["lambda"] = dict_lambda
-#             self._parameters["columns"] = columns
-#             return transf_dataframe
-#         else:
-#             print("You should first associate a stationary pipeline to this transformation")
+    def apply(self, 
+              columns: list[str]) -> pd.DataFrame | None:
+        """
+        lambda : {None, scalar}, optional
+            If lmbda is not None, do the transformation for that value. 
+            If lmbda is None, find the lambda that maximizes the log-likelihood 
+                function and return it as the second output argument.
+        """
+        dict_lambda={}
+        transf_dataframe=pd.DataFrame()
+        if self.stationary is not None:
+            transf_dataframe.index = self.stationary.input.dataframe.index
+            for column in columns:
+                box_cox_data, lambda_par = boxcox(
+                    self.stationary.input.dataframe[column].values
+                )
+                transf_dataframe[column]= box_cox_data
+                dict_lambda[column]=lambda_par
+            self._parameters["lambda"] = dict_lambda
+            self._parameters["columns"] = columns
+            return transf_dataframe
+        else:
+            print("You should first associate a stationary pipeline to this transformation")
 
 
-#     def invert(self,
-#                transf_dataframe:pd.DataFrame,
-#                columns: list[str]|None = None) -> pd.DataFrame:
-#         """
-#         `columns`
-#             This parameter should be 
-#         """
-#         inverted_dataframe=pd.DataFrame()
-#         if columns is None:
-#             columns = self.parameters.get("columns",[])
-#         for column in columns:
-#             lambda_par = self.parameters["lambda"][column]
-#             inverted_dataframe[column] = inv_boxcox(
-#                 transf_dataframe[column].values,
-#                 lambda_par
-#             )
-#         return inverted_dataframe
+    def invert(self,
+               transformed_df:pd.DataFrame,
+               columns: list[str]|None = None) -> pd.DataFrame:
+        """
+        `columns`
+            This parameter should be 
+        """
+        inverted_dataframe=pd.DataFrame()
+        if columns is None:
+            columns = self.parameters.get("columns",[])
+        for column in columns:
+            lambda_par = self.parameters["lambda"][column]
+            inverted_dataframe[column] = inv_boxcox(
+                transformed_df[column].values,
+                lambda_par
+            )
+        return inverted_dataframe
 
 

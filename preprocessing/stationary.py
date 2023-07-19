@@ -32,9 +32,18 @@ class Stationary(ABC):
     def __init__(self, input: StationaryInput):
         self.trans_pipeline = []
         self.input = input
+        self.tranformed_data = input.dataframe
     
     def add_transformation_to_pipeline(self,transformation:Transformation):
         self.trans_pipeline.append(transformation)
 
-    def trend_stationarity(self):
-        pass
+    # @abstractmethod
+    # def stationarize(self):
+    #     pass
+
+    def trend_stationarity_testing(self,columns:list[str] | None = None):
+        if self.tranformed_data is not None:
+            self.tranformed_data:pd.DataFrame
+            if columns is None:
+                columns = list(self.tranformed_data.columns)
+
