@@ -8,9 +8,8 @@ class PreprocessInput(ABC):
         self._dataframe :pd.DataFrame = self.fetch_data(path=path_to_data)
 
     @property
-    @abstractmethod
     def dataframe(self)-> pd.DataFrame:
-        pass
+        return self._dataframe
     
     def fetch_data(self, path:Path)-> pd.DataFrame:
         # read raw data

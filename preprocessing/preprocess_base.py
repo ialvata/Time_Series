@@ -9,12 +9,12 @@ from preprocessing.preprocess_input_base import PreprocessInput
 
 class Preprocess(ABC):
     def __init__(self, input:PreprocessInput):
-        self.pipeline = []
         self.input = input
 
     @property  
     def dataframe(self)->pd.DataFrame:
         return self.input.dataframe
+    
     @abstractmethod
     def clean_dataframe(self):
         pass
