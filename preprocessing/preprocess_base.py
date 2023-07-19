@@ -3,11 +3,21 @@ from  abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
+from preprocessing.transformations_base import Transformation
+from preprocessing.preprocess_input_base import PreprocessInput
 
-class PreprocessingPipeline(ABC):
-    def __init__(self, path_to_data: Path | None = None):
-        if path_to_data:
-            self.dataframe :pd.DataFrame = self.fetch_data(path=path_to_data)
+
+class Preprocess(ABC):
+    def __init__(self, input:PreprocessInput):
+        self.input = input
+
+    @property  
+    def dataframe(self)->pd.DataFrame:
+        return self.input.dataframe
+    
+    @abstractmethod
+    def clean_dataframe(self):
+        pass
 
     def add_lags(self, df:pd.DataFrame, n_lags:int|list[int], drop_cols:list)-> pd.DataFrame:
         """
@@ -32,7 +42,5 @@ class PreprocessingPipeline(ABC):
                 # resetting index so that .loc[0] gives 1st row
         )
 
-    def fetch_data(self, path:Path)-> pd.DataFrame:
-        # read raw data
-        dataframe = pd.read_csv(path)
-        return dataframe
+    
+
