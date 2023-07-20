@@ -8,7 +8,11 @@ from stat_tests.trend_stationarity import adf_test,kpss_test
 from preprocessing.transformations_base import Transformation
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
+from enum import Enum
 
+class TrendStationaryOption(Enum):
+    ADF = 1
+    KPSS = 2
 
 class StationaryInput(ABC):
     def __init__(self, dataframe: pd.DataFrame, alpha:float = 0.05):
@@ -52,14 +56,26 @@ class Stationary(ABC):
     def plot_data(self):
         pass
 
-    def is_trend_stationarity(self,columns:list[str] | None = None, 
+    def is_trend_stationarity(self,columns:list[str] | None = None,
+                              test_option:TrendStationaryOption = TrendStationaryOption.ADF,                                 
                               print_output:bool = False)-> np.bool_|None:
         if self.tranformed_data is not None:
-            adf_test_results = []
+            test_results = []
             self.tranformed_data:pd.DataFrame
             if columns is None:
                 columns = list(self.tranformed_data.columns)
             for column in columns:
-                adf_res = adf_test(self.tranformed_data[column], print_output = print_output)
-                adf_test_results.append(adf_res.p_value<=self.input.alpha)
-            return np.all(adf_test_results)
+                match test_option:
+                    case TrendStationaryOption.ADF:
+                        test_res = adf_test(self.tranformed_data[column], 
+                                        print_output = print_output)
+                        test_results.append(test_res.p_value<=self.input.alpha)
+                    case TrendStationaryOption.KPSS:
+                        test_res = kpss_test(self.tranformed_data[column], 
+                                        print_output = print_output)
+                        test_results.append(test_res.p_value<=self.input.alpha)
+                    case _:
+                        print("Please choose a correct TrendStationaryOption")
+                        break
+                
+            return np.all(test_results)

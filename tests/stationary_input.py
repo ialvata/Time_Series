@@ -66,7 +66,7 @@ class AirPassengersStationary(Stationary):
 train_input = StationaryInput(train_set)
 stat_pipeline = AirPassengersStationary(train_input)
 stat_pipeline.stationarize()
-stat_pipeline.is_trend_stationarity(["value"])
+assert stat_pipeline.is_trend_stationarity(["value"], print_output= True)
 # box_cox_transform = BoxCox(stat_pipeline)
 # box_cox_transform.apply(["value"])
 # diff_transform = Difference(periods=1,stationary=stat_pipeline)
