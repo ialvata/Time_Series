@@ -53,14 +53,13 @@ class Stationary(ABC):
         pass
 
     def is_trend_stationarity(self,columns:list[str] | None = None, 
-                              print_output:bool = False)-> bool:
+                              print_output:bool = False)-> np.bool_|None:
         if self.tranformed_data is not None:
             adf_test_results = []
             self.tranformed_data:pd.DataFrame
             if columns is None:
                 columns = list(self.tranformed_data.columns)
-            adf_test_results.append(
-                adf_test(self.tranformed_data, print_output = print_output)
-            )
-
-            return True
+            for column in columns:
+                adf_res = adf_test(self.tranformed_data[column], print_output = print_output)
+                adf_test_results.append(adf_res.p_value<=self.input.alpha)
+            return np.all(adf_test_results)
