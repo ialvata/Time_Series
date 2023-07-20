@@ -37,15 +37,30 @@ class Stationary(ABC):
     
     def add_transformation_to_pipeline(self,transformation:Transformation):
         self.transformation_pipeline.append(transformation)
+
+    def remove_last_in_pipeline(self):
+        self.transformation_pipeline.pop()
+
     def last_transformation_in_pipeline(self)->Transformation:
         return self.transformation_pipeline[-1]
-    # @abstractmethod
-    # def stationarize(self):
-    #     pass
+    
+    @abstractmethod
+    def stationarize(self):
+        pass
 
-    def trend_stationarity_testing(self,columns:list[str] | None = None):
+    @abstractmethod
+    def plot_data(self):
+        pass
+
+    def is_trend_stationarity(self,columns:list[str] | None = None, 
+                              print_output:bool = False)-> bool:
         if self.tranformed_data is not None:
+            adf_test_results = []
             self.tranformed_data:pd.DataFrame
             if columns is None:
                 columns = list(self.tranformed_data.columns)
+            adf_test_results.append(
+                adf_test(self.tranformed_data, print_output = print_output)
+            )
 
+            return True

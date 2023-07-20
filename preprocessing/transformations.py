@@ -63,6 +63,7 @@ class Difference(Transformation):
                             inverted_values.append(inverted_value)
                         concat_df[column]=inverted_values
                     self.stationary.tranformed_data = concat_df
+                    self.stationary.remove_last_in_pipeline()
                 else:
                     print("You should first use the apply method to difference the dataframe.")
             else:
@@ -99,7 +100,7 @@ class BoxCox(Transformation):
             transf_dataframe.index = self.stationary.tranformed_data.index
             for column in columns:
                 box_cox_data, lambda_par = boxcox(   
-                    self.stationary.input.dataframe[column].values
+                    self.stationary.tranformed_data[column].values
                 )
                 transf_dataframe[column]= box_cox_data
                 dict_lambda[column]=lambda_par
@@ -131,6 +132,7 @@ class BoxCox(Transformation):
                         lambda_par
                     )
                 self.stationary.tranformed_data = inverted_dataframe
+                self.stationary.remove_last_in_pipeline()
             else:
                 print("The last data transformation was from a different transformation.\
                        Please use the correct transformation")
