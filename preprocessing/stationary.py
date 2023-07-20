@@ -30,13 +30,15 @@ class Stationary(ABC):
     from the original preprocessed data.
     """
     def __init__(self, input: StationaryInput):
-        self.trans_pipeline = []
+        self.transformation_pipeline = []
+        # input serves as a backup of original data
         self.input = input
         self.tranformed_data = input.dataframe
     
     def add_transformation_to_pipeline(self,transformation:Transformation):
-        self.trans_pipeline.append(transformation)
-
+        self.transformation_pipeline.append(transformation)
+    def last_transformation_in_pipeline(self)->Transformation:
+        return self.transformation_pipeline[-1]
     # @abstractmethod
     # def stationarize(self):
     #     pass

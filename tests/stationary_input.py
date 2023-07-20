@@ -48,17 +48,24 @@ train_set = air_passengers_cleaned.iloc[:-test_rows]
 train_input = StationaryInput(train_set)
 stat_pipeline = Stationary(train_input)
 diff_transform = Difference(periods=3,stationary=stat_pipeline)
-diff_df = diff_transform.apply(["value"])
+diff_transform.apply(["value"])
+diff_df = stat_pipeline.tranformed_data
 if diff_df is not None:
-    undiff_df = diff_transform.invert(transformed_df=diff_df)
+    diff_transform.invert()
+    undiff_df = stat_pipeline.tranformed_data
     if undiff_df is not None:
+        print("Doing assert for Difference")
         assert (undiff_df == train_set).all().values
 
-box_cox_transform = BoxCox(stat_pipeline)
-box_cox_df = box_cox_transform.apply(["value"])
+stat_pipeline_2 = Stationary(train_input)
+box_cox_transform = BoxCox(stat_pipeline_2)
+box_cox_transform.apply(["value"])
+box_cox_df = stat_pipeline_2.tranformed_data
 if box_cox_df is not None:
-    invert_box_cox_df = box_cox_transform.invert(transformed_df=box_cox_df)
+    box_cox_transform.invert()
+    invert_box_cox_df = stat_pipeline_2.tranformed_data
     if invert_box_cox_df is not None:
-        assert (invert_box_cox_df == train_set).all().values
+        print("Doing assert for BoxCox")
+        assert (invert_box_cox_df - train_input.dataframe < 10**(-12) ).all().values
 
 print("OLá")
