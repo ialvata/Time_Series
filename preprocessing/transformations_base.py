@@ -2,13 +2,23 @@ from  abc import ABC, abstractmethod
 
 class Transformation(ABC):
     _type:str
+
+    def __init__(self):
+        self._parameters = {}
+        
+    def __repr__(self) -> str:
+        if self._parameters is not None:
+            return f"{self._type}({self._parameters})"
+        else:
+            return f"{self._type}({None})"
     @property
-    @abstractmethod
-    def parameters(self):
-        pass
+    def parameters(self)-> dict:
+        return self._parameters
+    
     @abstractmethod
     def apply(self):
         pass
+    
     @abstractmethod
     def invert(self):
         pass
