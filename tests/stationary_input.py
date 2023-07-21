@@ -3,6 +3,7 @@ from preprocessing.stationary import Stationary
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.transformations import Difference,BoxCox
+from models.sarimax import SARIMAXModel,SARIMAXOrder,SeasonalOrder,NonSeasonalOrder
 import matplotlib.pyplot as plt
 
 import pandas as pd
@@ -67,6 +68,11 @@ train_input = StationaryInput(train_set)
 stat_pipeline = AirPassengersStationary(train_input)
 stat_pipeline.stationarize()
 assert stat_pipeline.is_trend_stationarity(["value"], print_output= True)
+
+sarimax = SARIMAXModel()
+sarimax.find_best(endogenous_data=stat_pipeline.tranformed_data)
+print(sarimax.best_order)
+print(sarimax.forecast())
 # box_cox_transform = BoxCox(stat_pipeline)
 # box_cox_transform.apply(["value"])
 # diff_transform = Difference(periods=1,stationary=stat_pipeline)
