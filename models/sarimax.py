@@ -5,7 +5,8 @@ from collections import namedtuple
 from typing import NamedTuple
 from itertools import product
 from  math import inf as INFINITY
-
+import numpy as np
+from statsmodels.stats.diagnostic import acorr_ljungbox as ljung_box
 
 SeasonalOrder = namedtuple(typename="SeasonalOrder", 
                        field_names=["P","D", "Q","s"])
@@ -156,3 +157,35 @@ class SARIMAXModel:
                 pass
             else:
                 print("Please first fit a custom model! Only then run the forecast method.")
+    
+    def test_residuals(self, lags:int | np.ndarray = [10], 
+                       use_best_model:bool = False,
+                       plot_diagnostics:bool = False, 
+                       **kwargs) -> pd.DataFrame:
+        """
+        Based on the statsmodels Ljung-Box test of autocorrelation in residuals.
+
+        Parameters
+        ----------
+        lags : {int, array_like}, default None
+            If lags is an integer then this is taken to be the largest lag
+            that is included, the test result is reported for all smaller lag
+            length. If lags is a list or array, then all lags are included up to
+            the largest lag in the list, however only the tests for the lags in
+            the list are reported. If lags is None, then the default maxlag is
+            min(10, nobs // 5). The default number of lags changes if period
+            is set.
+        boxpierce : bool, default False
+            If true, then additional to the results of the Ljung-Box test also the
+            Box-Pierce test results are returned.
+        """
+
+        if use_best_model:
+            if plot_diagnostics:
+                self.best_model.plot_diagnostics(figsize(10,8))
+            residuals = self.best_model.resid
+        else:
+            if plot_diagnostics:
+                self.custom_model.plot_diagnostics(figsize(10,8))
+            residuals = self.custom_model.resid
+        return ljung_box(residuals, lags = lags, **kwargs)
