@@ -7,6 +7,7 @@ from itertools import product
 from  math import inf as INFINITY
 import numpy as np
 from statsmodels.stats.diagnostic import acorr_ljungbox as ljung_box
+from statsmodels.tsa.statespace.mlemodel import MLEResults, MLEResultsWrapper 
 
 SeasonalOrder = namedtuple(typename="SeasonalOrder", 
                        field_names=["P","D", "Q","s"])
@@ -55,6 +56,7 @@ class SARIMAXModel:
         self.best_order = None
         self.best_model = None
         self.custom_model = None
+        self.residuals_test_df = None
 
     def find_best(
             self, 
@@ -93,12 +95,12 @@ class SARIMAXModel:
                             seasonal_order=order.seasonal,
                             simple_differencing = simple_differencing,
                             **kwargs)
-            fitted_model = model.fit(disp=False)
+            fitted_model:MLEResultsWrapper | MLEResults = model.fit(disp=False)
             aic = fitted_model.aic
             if aic < best_aic:
                 best_aic = aic
-                self.best_model = fitted_model
-                self.best_order = order
+                self.best_model:MLEResultsWrapper | MLEResults = fitted_model
+                self.best_order:SARIMAXOrder = order
 
 
     def forecast(self,steps=1, signal_only=False, use_best_model:bool = False, **kwargs):
@@ -158,12 +160,15 @@ class SARIMAXModel:
             else:
                 print("Please first fit a custom model! Only then run the forecast method.")
     
-    def test_residuals(self, lags:int | np.ndarray = [10], 
+    def check_residuals(self, lags:int | np.ndarray = [10], 
                        use_best_model:bool = False,
                        plot_diagnostics:bool = False, 
-                       **kwargs) -> pd.DataFrame:
+                       **kwargs) -> bool:
         """
-        Based on the statsmodels Ljung-Box test of autocorrelation in residuals.
+        Based on the statsmodels Ljung-Box test of autocorrelation 
+        (or dependency) in residuals.
+        This method also allows for plotting some basic graphs for simple dignostic about
+        the residuals.
 
         Parameters
         ----------
@@ -178,14 +183,21 @@ class SARIMAXModel:
         boxpierce : bool, default False
             If true, then additional to the results of the Ljung-Box test also the
             Box-Pierce test results are returned.
+
+        Returns
+        -------
+        bool value
+            True, if H0 is not rejected, i.e. residuals are uncorrelated, which is consistent
+            with independent residuals. 
         """
 
         if use_best_model:
             if plot_diagnostics:
-                self.best_model.plot_diagnostics(figsize(10,8))
+                self.best_model.plot_diagnostics(figsize=(10,8))
             residuals = self.best_model.resid
         else:
             if plot_diagnostics:
-                self.custom_model.plot_diagnostics(figsize(10,8))
+                self.custom_model.plot_diagnostics(figsize=(10,8))
             residuals = self.custom_model.resid
-        return ljung_box(residuals, lags = lags, **kwargs)
+        self.residuals_test_df = ljung_box(residuals, lags = lags, **kwargs)
+        return self.residuals_test_df["lb_pvalue"].iloc[0]>0.05

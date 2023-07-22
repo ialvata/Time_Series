@@ -60,6 +60,8 @@ class AirPassengersStationary(Stationary):
         box_cox_transform.apply(["value"])
         diff_transform = Difference(periods=1,stationary=self)
         diff_transform.apply(["value"])
+        diff_transform_seasonal = Difference(periods=12,stationary=self)
+        diff_transform_seasonal.apply(["value"])
         if plot_flag:
             self.plot_data("value")
 
@@ -71,8 +73,11 @@ assert stat_pipeline.is_trend_stationarity(["value"], print_output= True)
 
 sarimax = SARIMAXModel()
 sarimax.find_best(endogenous_data=stat_pipeline.tranformed_data)
-print(sarimax.best_order)
-print(sarimax.forecast())
+print(sarimax.best_order) 
+# SARIMAXOrder(NonSeasonalOrder(p=2, d=0, q=1), SeasonalOrder(P=0, D=0, Q=1, s=12))
+print(sarimax.forecast(use_best_model=True))
+residuals_df = sarimax.check_residuals(use_best_model=True, plot_diagnostics=True)
+
 # box_cox_transform = BoxCox(stat_pipeline)
 # box_cox_transform.apply(["value"])
 # diff_transform = Difference(periods=1,stationary=stat_pipeline)
