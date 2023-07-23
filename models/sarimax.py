@@ -21,6 +21,10 @@ class SARIMAXOrder:
         return f"SARIMAXOrder({self.non_seasonal}, {self.seasonal})"
     
 class SARIMAXModel:
+    """
+    This class will use by default the custom_model if it exists.
+    To use the best_model, one must explicitly state it, using the appropriate flags.
+    """
     def __init__(self, 
                  p_non_seasonal_max: int = 3, q_non_seasonal_max: int = 3,
                  diff_non_seasonal: int = 0,
@@ -102,6 +106,26 @@ class SARIMAXModel:
                 self.best_model:MLEResultsWrapper | MLEResults = fitted_model
                 self.best_order:SARIMAXOrder = order
 
+    def fit_custom_model(self, 
+            endogenous_data:pd.DataFrame | pd.Series,
+            exogenous_data: pd.DataFrame | pd.Series | None = None,
+            order:SARIMAXOrder | None = None,
+            simple_differencing:bool = False,
+            **kwargs
+        ):
+        if order is None:
+            order = SARIMAXOrder(
+                NonSeasonalOrder(1,0, 1),
+                SeasonalOrder(1,0, 1, 12)
+            )
+
+        model = SARIMAX(endog=endogenous_data, exog=exogenous_data, 
+                            order= order.non_seasonal,
+                            seasonal_order=order.seasonal,
+                            simple_differencing = simple_differencing,
+                            **kwargs)
+        self.custom_model: MLEResultsWrapper | MLEResults = model.fit(disp=False)
+
 
     def forecast(self,steps=1, signal_only=False, use_best_model:bool = False, **kwargs):
         """
@@ -156,7 +180,9 @@ class SARIMAXModel:
                 print("Please first find a best model! Only then run the forecast method.")
         else:
             if self.custom_model is not None:
-                pass
+                return self.custom_model.forecast(
+                    steps=steps, signal_only=signal_only, **kwargs
+                )
             else:
                 print("Please first fit a custom model! Only then run the forecast method.")
     
