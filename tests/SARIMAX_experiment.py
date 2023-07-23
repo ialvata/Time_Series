@@ -3,7 +3,8 @@ from preprocessing.stationary import Stationary
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.transformations import Difference,BoxCox
-from models.sarimax import SARIMAXModel,SARIMAXOrder,SeasonalOrder,NonSeasonalOrder
+from models.sarimax import SARIMAXModel
+from preprocessing.management import RollingFold
 import matplotlib.pyplot as plt
 
 import pandas as pd
@@ -35,10 +36,9 @@ air_passengers.clean_dataframe()
 air_passengers_cleaned = air_passengers.dataframe
 
 ################ Dataset splitting into Train and Test set ######################
-TRAIN_PROP = 0.9
-test_rows = int((1-TRAIN_PROP) * air_passengers_cleaned.shape[0])
-test_set = air_passengers_cleaned.iloc[-test_rows:]
-train_set = air_passengers_cleaned.iloc[:-test_rows]
+rol_fold = RollingFold(air_passengers_cleaned,train_prop = 0.8)
+train_test_generator = rol_fold.create_folds()
+train_set,test_set = next(train_test_generator)
 
 ###############      Stationarizing Data                #########################
 class AirPassengersStationary(Stationary):
@@ -74,9 +74,26 @@ assert stat_pipeline.is_trend_stationarity(["value"], print_output= True)
 sarimax = SARIMAXModel()
 sarimax.find_best(endogenous_data=stat_pipeline.tranformed_data)
 print(sarimax.best_order) 
-# SARIMAXOrder(NonSeasonalOrder(p=2, d=0, q=1), SeasonalOrder(P=0, D=0, Q=1, s=12))
+# SARIMAXOrder(NonSeasonalOrder(p=0, d=0, q=1), SeasonalOrder(P=0, D=0, Q=1, s=12))
+# 1958-08-31   -0.028699
 print(sarimax.forecast(use_best_model=True))
 residuals_df = sarimax.check_residuals(use_best_model=True, plot_diagnostics=True)
+############# Sequential rolling forecasts #########################
+forecasts = []
+rol_fold_stationarized = RollingFold(stat_pipeline.tranformed_data)
+stationarized_generator = rol_fold_stationarized.create_folds()
+for train,test in stationarized_generator:
+    sarimax.fit_custom_model(endogenous_data = train, order = sarimax.best_order)
+    forecast = sarimax.forecast()
+    forecasts.append(forecast.iloc[0])
+
+#################         Invert transformation on the SARIMAX forescasts        ##############
+
+
+
+
+
+
 
 # box_cox_transform = BoxCox(stat_pipeline)
 # box_cox_transform.apply(["value"])
