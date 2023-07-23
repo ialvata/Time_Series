@@ -10,7 +10,7 @@ from typing import Callable
 class Difference(Transformation):
     # TODO:
     #   1- Substitute prints with Exceptions.
-    #   2- Create decorators to avoid repetition.
+    #   2- Create decorators to avoid print repetition.
     _type = "Difference"
     
     def __init__(self, periods:int, stationary:Stationary | None = None):
@@ -42,7 +42,7 @@ class Difference(Transformation):
         else:
             print("You should first associate a stationary pipeline to this transformation") 
 
-    def invert(self):
+    def invert(self, transformed_df: pd.DataFrame | None = None):
         """
         The dataframe_diff column names must be a subset of Stationary dataframe
         column names.
@@ -50,7 +50,8 @@ class Difference(Transformation):
         if self.stationary is not None:
             if self.stationary.last_transformation_in_pipeline()==self:
                 periods = self.parameters["periods"]
-                transformed_df = self.stationary.tranformed_data
+                if transformed_df is None:
+                    transformed_df = self.stationary.tranformed_data
                 if self.initial_rows is not None:
                     concat_df:pd.DataFrame = pd.concat([self.initial_rows, transformed_df])
                     num_rows = concat_df.shape[0]
@@ -113,7 +114,8 @@ class BoxCox(Transformation):
 
 
     def invert(self,
-               columns: list[str]|None = None):
+               columns: list[str]|None = None,
+               transformed_df: pd.DataFrame | None = None):
         """
         `columns`
             This parameter should be 
@@ -121,8 +123,9 @@ class BoxCox(Transformation):
         if self.stationary is not None:
             if self.stationary.last_transformation_in_pipeline()==self:
                 inverted_dataframe=pd.DataFrame()
-                inverted_dataframe.index = self.stationary.tranformed_data.index
-                transformed_df = self.stationary.tranformed_data
+                if transformed_df is None:
+                    transformed_df = self.stationary.tranformed_data
+                inverted_dataframe.index = transformed_df.index
                 if columns is None:
                     columns = self.parameters.get("columns",[])
                 for column in columns:
