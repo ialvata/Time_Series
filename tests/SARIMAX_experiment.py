@@ -4,7 +4,7 @@ from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.transformations import Difference,BoxCox
 from models.sarimax import SARIMAXModel
-from preprocessing.management import RollingFold
+from preprocessing.window import RollingFold
 import matplotlib.pyplot as plt
 
 import pandas as pd
