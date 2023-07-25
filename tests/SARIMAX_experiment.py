@@ -4,7 +4,7 @@ from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.transformations import Difference,BoxCox
 from models.sarimax import SARIMAXModel
-from preprocessing.window import RollingFold
+from preprocessing.roll_window_base import RollWindow
 import matplotlib.pyplot as plt
 
 import pandas as pd
@@ -36,7 +36,7 @@ air_passengers.clean_dataframe()
 air_passengers_cleaned = air_passengers.dataframe
 
 ################ Dataset splitting into Train and Test set ######################
-rol_fold = RollingFold(air_passengers_cleaned,train_prop = 0.8)
+rol_fold = RollWindow(air_passengers_cleaned,train_prop = 0.8)
 train_test_generator = rol_fold.create_folds()
 train_set,test_set = next(train_test_generator)
 
@@ -70,7 +70,8 @@ train_input = StationaryInput(train_set)
 stat_pipeline = AirPassengersStationary(train_input)
 stat_pipeline.stationarize()
 assert stat_pipeline.is_trend_stationarity(["value"], print_output= True)
-
+# import warnings
+# warnings.filterwarnings('ignore')
 sarimax = SARIMAXModel()
 sarimax.find_best(endogenous_data=stat_pipeline.tranformed_data)
 print(sarimax.best_order) 
@@ -80,7 +81,7 @@ print(sarimax.forecast(use_best_model=True))
 residuals_df = sarimax.check_residuals(use_best_model=True, plot_diagnostics=True)
 ############# Sequential rolling forecasts #########################
 forecasts = []
-rol_fold_stationarized = RollingFold(stat_pipeline.tranformed_data)
+rol_fold_stationarized = RollWindow(stat_pipeline.tranformed_data)
 stationarized_generator = rol_fold_stationarized.create_folds()
 for train,test in stationarized_generator:
     sarimax.fit_custom_model(endogenous_data = train, order = sarimax.best_order)
