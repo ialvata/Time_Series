@@ -18,3 +18,20 @@ class Preprocess(ABC):
     @abstractmethod
     def clean_dataframe(self):
         pass
+
+    def plot_heatmap(self):
+        """
+        This method plots a correlation heatmap using all the features in the dataframe.
+        """
+        plt.figure(figsize=(8, 8))
+        plt.matshow(self.dataframe.corr(),fignum=0)
+        plt.xticks(range(self.dataframe.shape[1]), self.dataframe.columns, 
+                   fontsize=10, rotation=90)
+        plt.gca().xaxis.tick_bottom()
+        plt.yticks(range(self.dataframe.shape[1]), self.dataframe.columns, fontsize=10)
+
+        cb = plt.colorbar()
+        cb.ax.tick_params(labelsize=10)
+        plt.title("Feature Correlation Heatmap", fontsize=14)
+        plt.tight_layout()
+        plt.show()
