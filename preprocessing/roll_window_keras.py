@@ -17,11 +17,22 @@ class KerasWindow(RollWindow):
                  data_split: Split,
                  input_length: int,
                  label_length: int,
-                 sequence_stride: int,
+                 n_step_forecast:int = 1,
+                 sequence_stride: int = 1,
                  label_columns: list[str] | None = None,
-                 shuffle:bool = False, batch_size: int = 128
+                 shuffle:bool = False, 
+                 batch_size: int = 128
                  ):
         """
+        Parameters:
+        -----------
+        n_step_forecast: int
+            Integer variable that defines the number of lookahead steps we will forecast.
+            If = 1, then we're doing a single-step forecast.
+            If > 1, then we're doing a multi-step forecast.
+
+        Observations:
+        -------------
         This will serve as x argument to the `fit` method of the Keras Model API.
         The fit method, in the x argument, will take a `tf.data.Dataset` like object.
         In this case, it should be a **tuple** of either (inputs, targets) or 
@@ -36,6 +47,8 @@ class KerasWindow(RollWindow):
         
         The second method may be too ineficient memory wise, while the first may be too slow, for 
         a great amount of data.
+
+        TODO: Create data using the first method. The first is already implemented.
         """
         self.data_split = data_split
         self.label_columns = label_columns
@@ -45,12 +58,13 @@ class KerasWindow(RollWindow):
             name: i for i, name in enumerate(self.data_split.train_df.columns)
         }
         self.input_length = input_length
-        self.sequence_length = input_length + label_length
+        self.label_length = label_length
+        self.sequence_length = input_length + n_step_forecast
         self.sequence_stride = sequence_stride
         self.shuffle = shuffle
         self.batch_size = batch_size
 
-    def create_keras_dataset(self, dataframe:pd.DataFrame) -> tf.data.Dataset:
+    def filtered_keras_dataset(self, dataframe:pd.DataFrame) -> tf.data.Dataset:
         """
         Example
         -------
@@ -93,10 +107,10 @@ class KerasWindow(RollWindow):
             shuffle = self.shuffle,
             batch_size = self.batch_size
         )
-        ds.map(self.filter,
+        return ds.map(self.filter,
             # num_parallel_calls=tf.data.AUTOTUNE
         )
-        return ds
+        
     
     def filter(self, tensor:tf.Tensor):
         """
@@ -104,16 +118,28 @@ class KerasWindow(RollWindow):
         sequence_length will be the window size (input length plus label length).
         """
         inputs = tensor[:,:self.input_length,:]
-        labels = tensor[:,self.input_length:,:]
+        label_start_index = self.sequence_length - self.label_length
+        labels = tensor[:,label_start_index:,:]
         if self.label_columns is not None:
             labels = tf.stack(
                 [
                     labels[:,:,self.column_indices[name]]
                     for name in self.label_columns
-                ]
+                ], axis=1 # we're stacking on the 3rd axis, the features/columns axis
             )
         return inputs, labels
     
     @property
     def train_data(self):
-         return self.create_keras_dataset(self.data_split.train_df)
+         return self.filtered_keras_dataset(self.data_split.train_df)
+    
+    @property
+    def val_data(self):
+         if self.data_split.val_df is not None:
+            return self.filtered_keras_dataset(self.data_split.val_df)
+         else:
+             raise Exception("This Split object has no Validation Data!")
+    
+    @property
+    def test_data(self):
+         return self.filtered_keras_dataset(self.data_split.test_df)
