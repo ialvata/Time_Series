@@ -38,8 +38,10 @@ class AirTemperature(Preprocess):
                 # use of to_datetime makes the conversion must faster
                 to_datetime(
                     self.dataframe["Date Time"],
-                    format="%d.%m.%Y %H:%M:%S"
-                ))
+                    format="%d.%m.%Y %H:%M:%S",
+                ),
+                freq="infer"
+                )
             self.dataframe.drop(["Date Time"],axis=1, inplace=True)
             self.cleaned = True
         else:
@@ -61,8 +63,9 @@ if __name__ == "__main__":
 
 
     window = KerasWindow(data_split, input_length=10, 
-                         label_length=10,n_step_forecast=10, label_columns=["T (degC)"])
+                         label_length=10,n_step_forecast=2, label_columns=["T (degC)"])
     model = LSTMKeras()
-    model.fit(window.train_data,window.val_data,max_epochs=3, patience=3)
+    model.fit(window,max_epochs=10, patience=3)
+    model.plot_predictions("T (degC)",3)
     
     print("ola")

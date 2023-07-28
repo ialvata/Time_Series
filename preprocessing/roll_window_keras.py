@@ -125,7 +125,8 @@ class KerasWindow(RollWindow):
                 [
                     labels[:,:,self.column_indices[name]]
                     for name in self.label_columns
-                ], axis=1 # we're stacking on the 3rd axis, the features/columns axis
+                ], 
+                axis=2 # we're stacking on the 3rd axis (axis=2), the features/columns axis.
             )
         return inputs, labels
     
@@ -143,3 +144,74 @@ class KerasWindow(RollWindow):
     @property
     def test_data(self):
          return self.filtered_keras_dataset(self.data_split.test_df)
+
+
+if __name__=="__main__":
+    import numpy as np
+    data = np.array([range(100),range(100,200),range(200,300)]).T#np.array([range(100),range(100)]).T
+    # data -> array(
+    #     [
+    #         [  0, 100, 200],
+    #         [  1, 101, 201],
+    #             ...
+    #         [ 98, 198, 298],
+    #         [ 99, 199, 299]
+    #     ]
+    # )
+    window = 10
+    stride = 1
+    ds = timeseries_dataset_from_array(
+                data = data,
+                targets = None,
+                sequence_length = window,
+                sequence_stride = stride,
+                shuffle = False,
+                batch_size = 2
+            )
+    input_length = 6
+    label_columns = ["col_2","col_3"]
+    column_indices = {
+        "col_1": 0,
+        "col_2": 1,
+        "col_3": 2,
+    }
+    def filter(tensor:tf.Tensor):
+        inputs = tensor[:,:input_length,:]
+        labels = tensor[:,input_length:,:]
+        if label_columns is not None:
+            labels = tf.stack(
+                [
+                    labels[:,:,column_indices[name]]
+                    for name in label_columns
+                ],
+                axis = 2
+            )
+        return inputs, labels
+    ds_filter = ds.map(filter)
+    [batch for batch in ds_filter]
+    # label tensors respect shape when stacked by the correct axis.
+    # [(<tf.Tensor: shape=(2, 6, 3), dtype=int64, numpy=
+    #     array([[[  0, 100, 200],
+    #             [  1, 101, 201],
+    #             [  2, 102, 202],
+    #             [  3, 103, 203],
+    #             [  4, 104, 204],
+    #             [  5, 105, 205]],
+        
+    #             [[  1, 101, 201],
+    #             [  2, 102, 202],
+    #             [  3, 103, 203],
+    #             [  4, 104, 204],
+    #             [  5, 105, 205],
+    #             [  6, 106, 206]]])>,
+    #     <tf.Tensor: shape=(2, 4, 2), dtype=int64, numpy=
+    #     array([[[106, 206],
+    #             [107, 207],
+    #             [108, 208],
+    #             [109, 209]],
+        
+    #             [[107, 207],
+    #             [108, 208],
+    #             [109, 209],
+    #             [110, 210]]])>),
+    #             ...
