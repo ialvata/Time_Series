@@ -3,6 +3,8 @@ from preprocessing.preprocess_input_base import PreprocessInput
 from pathlib import Path
 from pandas import DatetimeIndex,to_datetime
 from preprocessing.set_splitting import Split
+from preprocessing.roll_window_keras import KerasWindow
+from models.lstm import LSTMKeras
 
 
 
@@ -36,24 +38,34 @@ class AirTemperature(Preprocess):
                 # use of to_datetime makes the conversion must faster
                 to_datetime(
                     self.dataframe["Date Time"],
-                    format="%d.%m.%Y %H:%M:%S"
-                ))
+                    format="%d.%m.%Y %H:%M:%S",
+                ),
+                freq="infer"
+                )
             self.dataframe.drop(["Date Time"],axis=1, inplace=True)
             self.cleaned = True
         else:
             print("Dataframe has already been cleaned")
+if __name__ == "__main__":
+    air_temp = AirTemperature(input)
+    air_temp.clean_dataframe()
+    # air_temp.plot_heatmap()
 
-air_temp = AirTemperature(input)
-air_temp.clean_dataframe()
-air_temp.plot_heatmap()
+    data_split = Split(air_temp.dataframe, label_columns=["T (degC)"])
+    data_split.test_labels
+    data_split.test_labels
+    data_split.val_labels
+    assert (
+        len(data_split.train_df) + len(data_split.test_df)+len(data_split.val_df) 
+        == 
+        air_temp.dataframe.shape[0]
+    )
 
-data_split = Split(air_temp.dataframe, label_columns=["T (degC)"])
-data_split.test_labels
-data_split.test_labels
-data_split.val_labels
-assert (
-    len(data_split.train_df) + len(data_split.test_df)+len(data_split.val_df) 
-    == 
-    air_temp.dataframe.shape[0]
-)
-print("ola")
+
+    window = KerasWindow(data_split, input_length=10, 
+                         label_length=10,n_step_forecast=2, label_columns=["T (degC)"])
+    model = LSTMKeras()
+    model.fit(window,max_epochs=10, patience=3)
+    model.plot_predictions("T (degC)",3)
+    
+    print("ola")

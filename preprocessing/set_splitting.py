@@ -5,6 +5,7 @@ class Split:
                  input_columns: list[str] | None = None,
                  label_columns: list[str] | None = None,
                  train_val_test_prop:tuple[float,float,float] = (0.8,0.1,0.1)
+
                  ) -> None:
         
         if train_val_test_prop[0] == 0 or train_val_test_prop[2] == 0:
@@ -68,9 +69,7 @@ class Split:
         if self.label_columns is None:
             raise Exception("This split has no label_columns")
         if self.input_columns is None:
-            set_labels = set(self.label_columns)
-            set_all_columns = set(self.train_df.columns)
-            self.input_columns = list(set_all_columns-set_labels)
+            self.input_columns = self.train_df.columns
         if self._train_input is None:
             self._train_input = self.train_df[self.input_columns]
         return self._train_input
@@ -79,9 +78,7 @@ class Split:
         if self.label_columns is None:
             raise Exception("This split has no label_columns")
         if self.input_columns is None:
-            set_labels = set(self.label_columns)
-            set_all_columns = set(self.test_df.columns)
-            self.input_columns = list(set_all_columns-set_labels)
+            self.input_columns = self.train_df.columns
         if self._test_input is None:
             self._test_input = self.test_df[self.input_columns]
         return self._test_input
@@ -92,9 +89,59 @@ class Split:
         if self.val_df is None:
             raise Exception("This split has no validation dataframe")
         if self.input_columns is None:
-            set_labels = set(self.label_columns)
-            set_all_columns = set(self.val_df.columns)
-            self.input_columns = list(set_all_columns-set_labels)
+            self.input_columns = self.train_df.columns
         if self._val_labels is None:
             self._val_labels = self.val_df[self.label_columns]
         return self._val_labels
+    
+# class KerasSplit(Split):
+#     def __init__(self, dataframe: pd.DataFrame,
+#                  sequence_length:int,
+#                  sequence_stride: int = 1,
+#                  input_columns: list[str] | None = None, 
+#                  label_columns: list[str] | None = None, 
+#                  train_val_test_prop: tuple[float, float, float] = (0.8, 0.1, 0.1)
+#                  ) -> None:
+#         """
+#         Parameters
+#         ----------
+#         `sequence_length`:
+#             This variable gives us the size/length of rows of inputs to use. It should be
+#             equal to amount of lags we're willing to consider in our modelling.
+#         `sequence_stride`:
+#             This variable gives us the size/length of rows to jump, for the next inputs.
+#             It should be equal to the shift amount.
+
+#         Note: This is to be used in conjuction with a KerasWindow
+#         """
+#         super().__init__(dataframe, input_columns, label_columns, train_val_test_prop)
+#         self.sequence_length = sequence_length
+#         self.sequence_stride = sequence_stride
+#         self.total = sequence_length + sequence_stride
+#         ########################            train indices           ########################
+#         self.total_index_train = range(self.total, self.train_df.shape[0], self.total)
+
+#     ########################            label properties           ########################
+#     @property
+#     def train_labels(self):
+#         if self.label_columns is None:
+#             raise Exception("This split has no label_columns")
+#         if self._train_labels is None:
+#             self._train_labels = self.train_df[self.label_columns]
+#         return self._train_labels
+#     @property
+#     def test_labels(self):
+#         if self.label_columns is None:
+#             raise Exception("This split has no label_columns")
+#         if self._test_labels is None:
+#             self._test_labels = self.test_df[self.label_columns]
+#         return self._test_labels
+#     @property
+#     def val_labels(self):
+#         if self.label_columns is None:
+#             raise Exception("This split has no label_columns")
+#         if self.val_df is None:
+#             raise Exception("This split has no validation dataframe")
+#         if self._val_labels is None:
+#             self._val_labels = self.val_df[self.label_columns]
+#         return self._val_labels

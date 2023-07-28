@@ -24,6 +24,11 @@ class FeatureEngineering(ABC):
         Each row of df must be a separate time point, which will be transformed
         into a lag. This function will transform a matrix of dim -> n_samples x n_columns
         into a matrix of dim -> (n_samples-n_lags) x (n_columns*n_lags)
+        Attention
+        ---------
+        For use of lagged values as input, we should favor use of already existing rows 
+        instead of new columns creation as is done here. The use of already existing rows is
+        more efficient when it comes to memory consumption.
         """
         if isinstance(n_lags,int):
             lags = range(1,n_lags+1)
