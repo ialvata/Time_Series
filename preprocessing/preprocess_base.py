@@ -5,7 +5,7 @@ import numpy as np
 from pathlib import Path
 from preprocessing.transformations_base import Transformation
 from preprocessing.preprocess_input_base import PreprocessInput
-
+import missingno as msno
 
 class Preprocess(ABC):
     def __init__(self, input:PreprocessInput):
@@ -35,3 +35,9 @@ class Preprocess(ABC):
         plt.title("Feature Correlation Heatmap", fontsize=14)
         plt.tight_layout()
         plt.show()
+
+    def plot_missing_data(self):
+        """
+        A matrix plot of missing data
+        """
+        msno.matrix(self.dataframe,fontsize=15)
