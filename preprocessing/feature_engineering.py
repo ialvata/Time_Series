@@ -1,10 +1,10 @@
 import pandas as pd
 from  abc import ABC, abstractmethod
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from enum import IntEnum
 from datetime import datetime
+from sklearn.preprocessing import MinMaxScaler, StandardScaler,MaxAbsScaler
 
 class TrigSeason(IntEnum):
     """
@@ -15,9 +15,14 @@ class TrigSeason(IntEnum):
     MONTH = 30*DAY
     YEAR = 365*DAY
 
+class BaseScaler:
+    pass
+
 class FeatureEngineering(ABC):
-    def __init__(self, dataframe:pd.DataFrame):
+    def __init__(self, dataframe:pd.DataFrame, 
+                 scaler:MinMaxScaler | StandardScaler | MaxAbsScaler | None = None):
         self.dataframe = dataframe
+        self.scaler = scaler
 
     def add_lags(self, n_lags:int|list[int], drop_cols:list)-> pd.DataFrame:
         """
@@ -46,9 +51,17 @@ class FeatureEngineering(ABC):
                 .reset_index(drop=True)\
                 # resetting index so that .loc[0] gives 1st row
         )
-    
+    def scale_features(self)-> None:
+        """
+        This method will scale *all* features in the self.dataframe
+        """
+        if self.scaler is None:
+            self.scaler = MinMaxScaler()
+            self.scaler.fit(self.dataframe)
+        self.scaler.transform(self.dataframe)
+
     def add_trig_season(self, seasonality:TrigSeason, 
-                        time_column: pd.DatetimeIndex | None = None):
+                        time_column: pd.DatetimeIndex | None = None)-> None:
         """
         This method will encode time as a usable feature. The main difference between 
         using columns with month, day and other time related quantities, is that these
