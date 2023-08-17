@@ -50,9 +50,17 @@ air_temp.clean_dataframe()
 data_split = Split(air_temp.dataframe, label_columns=["T (degC)"])
 
 outliers = OutlierAnalysis(data_split.train_df)
-outliers.detect_outlier_iqr()
+outliers.iqr_detection()
 outliers.show_summary()
-outliers.detect_outlier_sd(columns=["p (mbar)"], sd_multiple = 3)
+# outliers.sd_detection(columns=["p (mbar)"], sd_multiple = 3)
+# outliers.show_summary()
+# outliers.plot_outliers(multiple=3)
+
+# considering only columns 0,2,3
+outliers.isolation_forest_detection(columns=['p (mbar)', 'Tpot (K)', 'rh (%)'])
 outliers.show_summary()
-outliers.plot_outliers(multiple=3)
+# doing a joint analysis with just columns 0,2,3
+outliers.isolation_forest_detection(columns=['p (mbar)', 'Tpot (K)', 'rh (%)'], 
+                                    separate_analysis=False)
+outliers.show_summary()
 print("Olá")

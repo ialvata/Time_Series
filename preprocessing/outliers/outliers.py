@@ -2,6 +2,7 @@ from sklearn.ensemble import IsolationForest
 import pandas as pd
 import numpy as np
 from enum import Enum
+from sklearn.preprocessing import StandardScaler
 
 class OutlierOption(Enum):
     """
@@ -25,8 +26,11 @@ class OutlierAnalysis:
         self.outlier_iqr_df = None
         # this will be a tuple with the dataframe's shape used in outlier detection
         self.shape = None
+        # When doing a joint isolation forest analysis, we want to see the columns being
+        # considered in the summary
+        self.isolation_forest_columns = None
 
-    def detect_outlier_sd(self,
+    def sd_detection(self,
                           dataframe:pd.DataFrame | None = None,
                           columns: list[str] | None = None,
                           sd_multiple:int = 2) -> None:
@@ -60,7 +64,7 @@ class OutlierAnalysis:
                 f"{sd_multiple} SD - {column}", "% of Outliers"
             ] = self.outlier_sd_df[column].sum()/len(dataframe)*100
 
-    def detect_outlier_iqr(self,
+    def iqr_detection(self,
                            dataframe:pd.DataFrame | None = None,
                            columns: list[str] | None = None,
                            iqr_multiple: float = 1.5) -> None:
@@ -94,6 +98,91 @@ class OutlierAnalysis:
             self.summary_df.loc[
                 f"{iqr_multiple} IQR - {column}", "% of Outliers"
             ] = self.outlier_iqr_df[column].sum()/len(dataframe)*100
+
+    def isolation_forest_detection(self,
+                                   dataframe:pd.DataFrame | None = None,
+                                   columns: list[str] | None = None,
+                                   outlier_fraction: float = 0.01,
+                                   separate_analysis:bool = True, 
+                                    **kwargs):
+        """
+        Outliers are identified using the Isolation Forest algorithm from Sci-kit Learn.
+        
+        Parameters
+        ----------
+            `dataframe`
+                Pandas dataframe
+            `columns`: list[str] | None = None. 
+                Name of the column that we want to detect anomalies in
+            `outliers_fraction`: float = 0.01. 
+                Percentage of outliers allowed in the sequence.
+            `separate_analysis`: bool = True.
+                The Isolation Forest algorithm is able to identify outliers, considering each
+                column separately, or considering all columns in `columns` together.
+                It's similar to considering just a marginal distribution, or a joint 
+                distribution.
+            `kwargs`
+                keyword arguments to be passed to `sklearn.ensemble.IsolationForest`.
+        
+        Returns
+        -------
+            df: Pandas dataframe with column for detected Isolation Forest anomalies (True/False)
+        """
+        if dataframe is None:
+            dataframe = self.dataframe
+        if columns is None:
+            columns = list(dataframe.columns)
+        self.shape = dataframe.shape
+        # creating dataframe with boolean masks with positions of outliers
+        self.outlier_iso_forest_df = pd.DataFrame(columns=columns)
+        # Scale the column that we want to flag for anomalies
+        scaler = StandardScaler()
+        scaled_time_series = scaler.fit_transform(dataframe)
+        column_indices = {
+            name: i for i, name in enumerate(dataframe.columns)
+        }
+        # train isolation forest
+        kwargs["contamination"] = outlier_fraction
+        kwargs["random_state"] = 42
+        model = IsolationForest(**kwargs)
+        if separate_analysis:
+            for column in columns:
+                # Predict returns ndarray of shape (n_samples,). For each observation, 
+                # tells whether or not (+1 or -1) it should be considered as an inlier 
+                # according to the fitted model.
+                predictions = model.fit_predict(
+                    scaled_time_series[
+                        :,[column_indices[column]]
+                    ]
+                )
+                # -1 is outlier and 1 is outlier. Changing it to 0 and 1
+                predictions = 1 - np.clip(predictions, a_min=0, a_max=None)
+                self.outlier_iso_forest_df[column] = predictions.astype(bool)
+                self.summary_df.loc[
+                    f"Isolation Forest - {column}", "# of Outliers"
+                ] = self.outlier_iso_forest_df[column].sum()
+                self.summary_df.loc[
+                    f"Isolation Forest - {column}", "% of Outliers"
+                ] = self.outlier_iso_forest_df[column].sum()/len(dataframe)*100
+        else:
+            predictions = model.fit_predict(
+                    scaled_time_series[
+                        # collecting only the columns we desire to consider in the algorithm
+                        :,[column_indices[column] for column in columns]
+                    ]
+                )
+            # -1 is outlier and 1 is inlier. Changing it to 1 and 0, respectively
+            predictions = 1 - np.clip(predictions, a_min=0, a_max=None)
+            # now, predictions are is_outlier array instead of is_inlier array.
+            self.outlier_iso_forest_df = predictions.astype(bool)
+            self.summary_df.loc[
+                "Isolation Forest - Jointly", "# of Outliers"
+            ] = self.outlier_iso_forest_df.sum()
+            self.summary_df.loc[
+                "Isolation Forest - Jointly", "% of Outliers"
+            ] = self.outlier_iso_forest_df.sum()/len(dataframe)*100
+            self.isolation_forest_columns = columns
+
 
     def plot_outliers(self, 
                       option:OutlierOption = OutlierOption.IQR, 
@@ -131,25 +220,8 @@ class OutlierAnalysis:
         self.summary_df.style.format({"% of Outliers": "{:.2f}%"})
         print(self.summary_df)
         print(f"Dataframe shape = {self.shape} ")
-
-# def detect_outlier_isolation_forest(ts, outlier_fraction, **kwargs):
-#     """
-#     In this definition, time series anomalies are detected using an Isolation Forest algorithm.
-#     Arguments:
-#         df: Pandas dataframe
-#         column_name: string. Name of the column that we want to detect anomalies in
-#         outliers_fraction: float. Percentage of outliers allowed in the sequence.
-#     Outputs:
-#         df: Pandas dataframe with column for detected Isolation Forest anomalies (True/False)
-#     """
-#     # Scale the column that we want to flag for anomalies
-#     min_max_scaler = StandardScaler()
-#     scaled_time_series = min_max_scaler.fit_transform(ts.reshape(-1, 1))
-#     # train isolation forest
-#     kwargs["contamination"] = outlier_fraction
-#     kwargs["random_state"] = 42
-#     model = IsolationForest(**kwargs)
-#     pred = model.fit_predict(scaled_time_series)
-#     # -1 is outlier and 1 is outlier. Changing it to 0 and 1
-#     pred = 1 - np.clip(pred, a_min=0, a_max=None)
-#     return pred.astype(bool)
+        if self.isolation_forest_columns is not None:
+            print(
+                "Isolation Forest Columns considered in Joint analysis"
+                f" -> {self.isolation_forest_columns}"
+            )
