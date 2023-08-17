@@ -5,10 +5,14 @@ import numpy as np
 
 class OutlierAnalysis:
     def __init__(self, dataframe:pd.DataFrame) -> None:
-        # outlier_sd_df will be a dataframe with boolean masks with the locations of the outliers.
-        self.outlier_sd_df = None
         self.dataframe = dataframe
         self.summary_df = pd.DataFrame(columns=["# of Outliers", "% of Outliers"])
+        # outlier_sd_df will be a dataframe with boolean masks with the locations of the outliers.
+        self.outlier_sd_df = None
+        # outlier_iqr_df will be a similar dataframe for IQR method
+        self.outlier_iqr_df = None
+        # this will be a tuple with the dataframe's shape used in outlier detection
+        self.shape = None
 
     def detect_outlier_sd(self,
                           dataframe:pd.DataFrame | None = None,
@@ -18,6 +22,7 @@ class OutlierAnalysis:
             dataframe = self.dataframe
         if columns is None:
             columns = list(dataframe.columns)
+        self.shape = dataframe.shape
         # creating dataframe with boolean masks with positions of outliers
         self.outlier_sd_df = pd.DataFrame(columns=columns)
         for column in columns:
@@ -29,18 +34,21 @@ class OutlierAnalysis:
                 (dataframe[column] > higher_bound) | (dataframe[column] < lower_bound)
             )
             self.summary_df.loc[
-                f"{sd_multiple}IQR - {column}", "# of Outliers"
+                f"{sd_multiple} SD - {column}", "# of Outliers"
             ] = self.outlier_sd_df[column].sum()
             self.summary_df.loc[
-                f"{sd_multiple}IQR - {column}", "% of Outliers"
+                f"{sd_multiple} SD - {column}", "% of Outliers"
             ] = self.outlier_sd_df[column].sum()/len(dataframe)*100
 
     def detect_outlier_iqr(self,
-                           columns: list[str],
                            dataframe:pd.DataFrame | None = None,
+                           columns: list[str] | None = None,
                            iqr_multiple: float = 1.5) -> None:
         if dataframe is None:
             dataframe = self.dataframe
+        if columns is None:
+            columns = list(dataframe.columns)
+        self.shape = dataframe.shape
         # creating dataframe with boolean masks with positions of outliers
         self.outlier_iqr_df = pd.DataFrame(columns=columns)
         for column in columns:
@@ -55,10 +63,18 @@ class OutlierAnalysis:
             self.outlier_iqr_df[column] = (
                 (dataframe[column] > higher_bound) | (dataframe[column] < lower_bound)
             )
+            self.summary_df.loc[
+                f"{iqr_multiple} IQR - {column}", "# of Outliers"
+            ] = self.outlier_iqr_df[column].sum()
+            self.summary_df.loc[
+                f"{iqr_multiple} IQR - {column}", "% of Outliers"
+            ] = self.outlier_iqr_df[column].sum()/len(dataframe)*100
 
     def show_summary(self):
+        print("\n###########################################################################")
         self.summary_df.style.format({"% of Outliers": "{:.2f}%"})
-        return self.summary_df
+        print(self.summary_df)
+        print(f"Dataframe shape = {self.shape} ")
 
 # def detect_outlier_isolation_forest(ts, outlier_fraction, **kwargs):
 #     """
