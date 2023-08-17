@@ -7,7 +7,7 @@ It could also be used in time series cross validation.
 import pandas as pd
 from collections.abc import Generator
 from  abc import ABC, abstractmethod
-from preprocessing.set_splitting import Split
+from preprocessing.data_spliting.set_splitting import Split
 
 class RollWindow(ABC):
     @abstractmethod

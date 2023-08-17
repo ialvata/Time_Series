@@ -2,7 +2,7 @@ from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from pathlib import Path
 from pandas import DatetimeIndex,to_datetime
-from preprocessing.set_splitting import Split
+from preprocessing.data_spliting.set_splitting import Split
 from preprocessing.roll_window_keras import KerasWindow
 from models.lstm import LSTMKeras
 

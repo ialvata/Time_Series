@@ -2,7 +2,7 @@ from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from pathlib import Path
 from pandas import DatetimeIndex,to_datetime
-from preprocessing.set_splitting import Split
+from preprocessing.data_spliting.set_splitting import Split
 
 
 
@@ -46,6 +46,7 @@ class AirTemperature(Preprocess):
 air_temp = AirTemperature(input)
 air_temp.clean_dataframe()
 air_temp.plot_heatmap()
+air_temp.plot_missing_data()
 
 data_split = Split(air_temp.dataframe, label_columns=["T (degC)"])
 data_split.test_labels

@@ -3,7 +3,7 @@ from preprocessing.stationary import Stationary
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.transformations import Difference,BoxCox
-from preprocessing.feature_engineering import FeatureEngineering, TrigSeason
+from preprocessing.feature_engineering.feature_engineering import FeatureEngineering, TrigSeason
 import matplotlib.pyplot as plt
 
 import pandas as pd

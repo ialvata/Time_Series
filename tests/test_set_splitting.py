@@ -1,7 +1,7 @@
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
-from preprocessing.set_splitting import Split
-from preprocessing.feature_engineering import FeatureEngineering, TrigSeason
+from preprocessing.data_spliting.set_splitting import Split
+from preprocessing.feature_engineering.feature_engineering import FeatureEngineering, TrigSeason
 import matplotlib.pyplot as plt
 
 import pandas as pd
