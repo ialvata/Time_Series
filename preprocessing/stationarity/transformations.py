@@ -1,5 +1,5 @@
-from preprocessing.stationary import Stationary
-from preprocessing.transformations_base import Transformation
+from preprocessing.stationarity.stationary import Stationary
+from preprocessing.stationarity.transformations_base import Transformation
 import pandas as pd
 from scipy.special import inv_boxcox
 from scipy.stats import boxcox

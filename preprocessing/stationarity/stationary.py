@@ -5,7 +5,7 @@ import numpy as np
 from pathlib import Path
 from scipy import stats
 from stat_tests.trend_stationarity import adf_test,kpss_test
-from preprocessing.transformations_base import Transformation
+from preprocessing.stationarity.transformations_base import Transformation
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from enum import Enum

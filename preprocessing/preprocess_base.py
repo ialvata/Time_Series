@@ -3,7 +3,7 @@ from  abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
-from preprocessing.transformations_base import Transformation
+from preprocessing.stationarity.transformations_base import Transformation
 from preprocessing.preprocess_input_base import PreprocessInput
 import missingno as msno
 
