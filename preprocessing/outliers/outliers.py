@@ -1,10 +1,22 @@
 from sklearn.ensemble import IsolationForest
 import pandas as pd
 import numpy as np
+from enum import Enum
+
+class OutlierOption(Enum):
+    """
+    Class for determining the plot data to be shown in plot_outliers method.
+    """
+    SD = 1
+    IQR = 2
 
 
 class OutlierAnalysis:
     def __init__(self, dataframe:pd.DataFrame) -> None:
+        """
+        Before using some of this methods, ponder the need to deseasonalize the data to avoid
+        identifying a seasonal peak as an outlier.
+        """
         self.dataframe = dataframe
         self.summary_df = pd.DataFrame(columns=["# of Outliers", "% of Outliers"])
         # outlier_sd_df will be a dataframe with boolean masks with the locations of the outliers.
@@ -18,6 +30,14 @@ class OutlierAnalysis:
                           dataframe:pd.DataFrame | None = None,
                           columns: list[str] | None = None,
                           sd_multiple:int = 2) -> None:
+        """
+        We consider the distance to the mean, using the standard deviation (SD), to identify 
+        the outliers.
+        The theory behind this assumes the data follows a Normal distribution.
+        When it follows another distribution, we should be careful using this criteria for
+        identifying outliers.
+        The mean and standard deviation are influenced by extreme values (possibly outliers).
+        """
         if dataframe is None:
             dataframe = self.dataframe
         if columns is None:
@@ -44,6 +64,11 @@ class OutlierAnalysis:
                            dataframe:pd.DataFrame | None = None,
                            columns: list[str] | None = None,
                            iqr_multiple: float = 1.5) -> None:
+        """
+        This method, since it uses quantiles, it's more robust to extreme values.
+        The choice of 1.5 as the Inter-quartile range (`iqr_multiple`) comes from assuming
+        a Normal distribution.
+        """
         if dataframe is None:
             dataframe = self.dataframe
         if columns is None:
@@ -69,6 +94,37 @@ class OutlierAnalysis:
             self.summary_df.loc[
                 f"{iqr_multiple} IQR - {column}", "% of Outliers"
             ] = self.outlier_iqr_df[column].sum()/len(dataframe)*100
+
+    def plot_outliers(self, 
+                      option:OutlierOption = OutlierOption.IQR, 
+                      dataframe:pd.DataFrame | None = None,
+                      columns: list[str] | None = None, 
+                      multiple: float | None = None, 
+                      **kwargs) -> None:
+        """
+        (Currently plotting only for IQR method is available)
+        Make a box plot from DataFrame columns.
+        The box extends from the Q1 to Q3 quartile values of the data,
+        with a line at the median (Q2). The whiskers extend from the edges
+        of box to show the range of the data. By default, they extend no more than
+        `1.5 * IQR (IQR = Q3 - Q1)` from the edges of the box, ending at the farthest
+        data point within that interval. Outliers are plotted as separate dots.
+
+        Parameters
+        ----------
+        **kwargs
+            All other plotting keyword arguments to be passed to
+            :func:`matplotlib.pyplot.boxplot`.
+
+
+        
+        """
+        if dataframe is None:
+                    dataframe = self.dataframe
+        if columns is None:
+            columns = list(dataframe.columns)
+        if option == OutlierOption.IQR:
+            dataframe.boxplot(column=columns, rot=45, whis = multiple,**kwargs)
 
     def show_summary(self):
         print("\n###########################################################################")
