@@ -8,7 +8,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from collections.abc import Generator
 
-from preprocessing.roll_window_base import RollWindow
+from preprocessing.roll_windows.roll_window_base import RollWindow
 from preprocessing.data_spliting.set_splitting import Split
 from keras.preprocessing import timeseries_dataset_from_array
 

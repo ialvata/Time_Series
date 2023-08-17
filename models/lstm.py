@@ -7,7 +7,7 @@ from keras.callbacks import EarlyStopping
 from keras.losses import MeanSquaredError
 from keras.metrics import MeanAbsoluteError
 from keras.layers import Dense, Conv1D, LSTM, Lambda, Reshape, RNN, LSTMCell
-from preprocessing.roll_window_keras import KerasWindow
+from preprocessing.roll_windows.roll_window_keras import KerasWindow
 from pandas import DatetimeIndex
 
 class LSTMKeras:
