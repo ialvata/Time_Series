@@ -32,25 +32,54 @@ class Stationary(ABC):
     """
     This class represents a pipeline/sequence of transformations that create stationary data
     from the original preprocessed data.
+
+    Methods
+    -------
+    `stationarize`:
+        This method should use Transformations subclasses, and make use of their apply methods.
+        Their apply methods will create automatically the pipeline.    
     """
     def __init__(self, input: StationaryInput):
         self.transformation_pipeline = []
         # input serves as a backup of original data
         self.input = input
         self.tranformed_data = input.dataframe
+        self.transformation_idx = 0
     
     def add_transformation_to_pipeline(self,transformation:Transformation):
         self.transformation_pipeline.append(transformation)
+        self.transformation_idx = self.transformation_idx + 1
 
     def remove_last_in_pipeline(self):
         self.transformation_pipeline.pop()
+        self.transformation_idx = self.transformation_idx - 1
 
     def last_transformation_in_pipeline(self)->Transformation:
         return self.transformation_pipeline[-1]
     
+    @property
+    def current_transformation(self)->Transformation:
+        return self.transformation_pipeline[self.transformation_idx]
+    
+    @property
+    def move_to_previous_transformation(self) -> None:
+        if self.transformation_idx > 0:
+            self.transformation_idx = self.transformation_idx - 1
+        else:
+            Exception("Current Transformation is already the first!")
+
     @abstractmethod
-    def stationarize(self):
-        pass
+    def stationarize(self):...
+
+    def destationarize(self, dataframe:pd.DataFrame | None = None) -> pd.DataFrame | None:
+        for transformation in self.transformation_pipeline:
+            transformation: Transformation
+            if dataframe is not None:
+                dataframe = transformation.invert(dataframe,return_output = True)
+            else:
+                transformation.invert(self.tranformed_data,return_output=False)
+        if dataframe is not None:
+            return dataframe
 
     @abstractmethod
     def plot_data(self):

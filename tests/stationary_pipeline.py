@@ -4,7 +4,7 @@ from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.stationarity.transformations import Difference,BoxCox
 import matplotlib.pyplot as plt
-from models.sarimax import SARIMAXModel
+from models.sarimax import SARIMAXModel,SARIMAXOrder, NonSeasonalOrder, SeasonalOrder
 from preprocessing.roll_windows.roll_window_base import ClassicalWindow
 
 import pandas as pd
@@ -73,14 +73,19 @@ assert stat_pipeline.is_trend_stationarity(["value"], print_output= True)
 # import warnings
 # warnings.filterwarnings('ignore')
 sarimax = SARIMAXModel()
-sarimax.find_best(endogenous_data=stat_pipeline.tranformed_data)
-print(sarimax.best_order) 
-# SARIMAXOrder(NonSeasonalOrder(p=0, d=0, q=1), SeasonalOrder(P=0, D=0, Q=1, s=12))
+# sarimax.find_best(endogenous_data=stat_pipeline.tranformed_data)
+# print(sarimax.best_order) 
+sarimax.fit_custom_model(
+    endogenous_data=stat_pipeline.tranformed_data,
+    simple_differencing=True,
+    order=SARIMAXOrder(NonSeasonalOrder(p=0, d=0, q=1), SeasonalOrder(P=0, D=0, Q=1, s=12))
+)
+# SARIMAXOrder(NonSeasonalOrder(p=0, d=0, q=1), SeasonalOrder(P=0, D=0, Q=1, s=12)
 # 1958-08-31   -0.028699
-print(sarimax.forecast(use_best_model=True))
-residuals_df = sarimax.check_residuals(use_best_model=True, plot_diagnostics=True)
+print(sarimax.forecast())
 
 
+stat_pipeline.destationarize()
 
 
 

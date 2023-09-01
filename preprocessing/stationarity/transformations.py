@@ -42,7 +42,9 @@ class Difference(Transformation):
         else:
             print("You should first associate a stationary pipeline to this transformation") 
 
-    def invert(self, transformed_df: pd.DataFrame | None = None):
+    def invert(self, transformed_df: pd.DataFrame | None = None,
+               return_output:bool = False,
+               remove_last_in_pipeline: bool = False) -> None | pd.DataFrame:
         """
         The dataframe_diff column names must be a subset of Stationary dataframe
         column names.
@@ -63,8 +65,11 @@ class Difference(Transformation):
                             inverted_value = concat_col_values[i] + inverted_values[i - periods]
                             inverted_values.append(inverted_value)
                         concat_df[column]=inverted_values
+                    if return_output:
+                        return concat_df
                     self.stationary.tranformed_data = concat_df
-                    self.stationary.remove_last_in_pipeline()
+                    if remove_last_in_pipeline:
+                        self.stationary.remove_last_in_pipeline()
                 else:
                     print("You should first use the apply method to difference the dataframe.")
             else:
@@ -115,15 +120,24 @@ class BoxCox(Transformation):
 
     def invert(self,
                columns: list[str]|None = None,
-               transformed_df: pd.DataFrame | None = None):
+               transformed_df: pd.DataFrame | None = None,
+               return_output:bool = False,
+               remove_last_in_pipeline: bool = False) -> None | pd.DataFrame:
         """
-        `columns`
-            This parameter should be 
+        Parameters
+        ----------
+        `return_output`: bool = True
+            If `return_output` is True, invert method will return a dataframe after inverting 
+            the transformations.
+            When `transformed_df` is None, `return_output` will be False.
+        `remove_last_in_pipeline`
+            Whether to update the transformation pipeline, when running this method. 
         """
         if self.stationary is not None:
             if self.stationary.last_transformation_in_pipeline()==self:
                 inverted_dataframe=pd.DataFrame()
                 if transformed_df is None:
+                    return_output = False
                     transformed_df = self.stationary.tranformed_data
                 inverted_dataframe.index = transformed_df.index
                 if columns is None:
@@ -134,8 +148,11 @@ class BoxCox(Transformation):
                         transformed_df[column].values,
                         lambda_par
                     )
+                if return_output:
+                    return inverted_dataframe
                 self.stationary.tranformed_data = inverted_dataframe
-                self.stationary.remove_last_in_pipeline()
+                if remove_last_in_pipeline:
+                    self.stationary.remove_last_in_pipeline()
             else:
                 print("The last data transformation was from a different transformation.\
                        Please use the correct transformation")

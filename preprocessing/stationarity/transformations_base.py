@@ -21,5 +21,6 @@ class Transformation(ABC):
         pass
     
     @abstractmethod
-    def invert(self,transformed_df: pd.DataFrame) -> None:
+    def invert(self,transformed_df: pd.DataFrame, 
+               return_output:bool = False) -> pd.DataFrame | None:
         pass
