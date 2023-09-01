@@ -1,4 +1,5 @@
 from  abc import ABC, abstractmethod
+import pandas as pd
 
 class Transformation(ABC):
     _type:str
@@ -20,5 +21,5 @@ class Transformation(ABC):
         pass
     
     @abstractmethod
-    def invert(self):
+    def invert(self,transformed_df: pd.DataFrame) -> None:
         pass
