@@ -18,13 +18,20 @@ class Difference(Transformation):
         self.stationary = stationary
         self.initial_rows = None
 
-    def apply(self, 
+    def transform(self, 
               columns: list[str]):
         """ 
-        The apply method transforms self.stationary.tranformed_data accordingly, and adds 
-        itself to the self.stationary.transformation_pipeline
+        The transform method transforms `stationary.tranformed_data` accordingly, and adds 
+        itself to the `stationary.transformation_pipeline`
 
-        Note:
+        Parameters
+        ----------
+        columns: list[str]
+            A list of strings with the columns names, to which we want to apply this
+            transformation.
+
+        Attention
+        ---------
             This method will return a smaller dataframe than the one entered, since the initial
             `periods` rows will be NaN, and dropped.
             This method preserves the column names.      
@@ -40,15 +47,18 @@ class Difference(Transformation):
             ).dropna()
             self.stationary.add_transformation_to_pipeline(self)
         else:
-            print("You should first associate a stationary pipeline to this transformation") 
+            Exception("You should first associate a stationary pipeline to this transformation") 
 
-    def invert(self, transformed_df: pd.DataFrame | None = None):
+    def invert(self, 
+               transformed_df: pd.DataFrame | None = None,
+               return_output:bool = False,
+               remove_last_in_pipeline: bool = False) -> None | pd.DataFrame:
         """
         The dataframe_diff column names must be a subset of Stationary dataframe
         column names.
         """
         if self.stationary is not None:
-            if self.stationary.last_transformation_in_pipeline()==self:
+            # if self.stationary.current_transformation==self:
                 periods = self.parameters["periods"]
                 if transformed_df is None:
                     transformed_df = self.stationary.tranformed_data
@@ -63,15 +73,18 @@ class Difference(Transformation):
                             inverted_value = concat_col_values[i] + inverted_values[i - periods]
                             inverted_values.append(inverted_value)
                         concat_df[column]=inverted_values
+                    if return_output:
+                        return concat_df
                     self.stationary.tranformed_data = concat_df
-                    self.stationary.remove_last_in_pipeline()
+                    # if remove_last_in_pipeline:
+                    #     self.stationary.remove_last_in_pipeline()
                 else:
-                    print("You should first use the apply method to difference the dataframe.")
-            else:
-                print("The last data transformation was from a different transformation.\
-                       Please use the correct transformation")
+                    Exception("You should first use the apply method to difference the dataframe.")
+            # else:
+            #     Exception("The last data transformation was from a different transformation.\
+            #            Please use the correct transformation")
         else:
-            print("You should first associate a stationary pipeline to this transformation.")
+            Exception("You should first associate a stationary pipeline to this transformation.")
 
 class BoxCox(Transformation):
 
@@ -87,13 +100,17 @@ class BoxCox(Transformation):
         }
         self.stationary = stationary
 
-    def apply(self, 
+    def transform(self, 
               columns: list[str]) -> pd.DataFrame | None:
         """
-        lambda : {None, scalar}, optional
-            If lmbda is not None, do the transformation for that value. 
-            If lmbda is None, find the lambda that maximizes the log-likelihood 
-                function and return it as the second output argument.
+        The transform method transforms `stationary.tranformed_data` accordingly, and adds 
+        itself to the `stationary.transformation_pipeline`
+
+        Parameters
+        ----------
+        columns: list[str]
+            A list of strings with the columns names, to which we want to apply this
+            transformation.
         """
         dict_lambda={}
         transf_dataframe=pd.DataFrame()
@@ -110,20 +127,29 @@ class BoxCox(Transformation):
             self.stationary.tranformed_data = transf_dataframe
             self.stationary.add_transformation_to_pipeline(self) 
         else:
-            print("You should first associate a stationary pipeline to this transformation")
+            Exception("You should first associate a stationary pipeline to this transformation")
 
 
     def invert(self,
+               transformed_df: pd.DataFrame | None = None,
                columns: list[str]|None = None,
-               transformed_df: pd.DataFrame | None = None):
+               return_output:bool = False,
+               remove_last_in_pipeline: bool = False) -> None | pd.DataFrame:
         """
-        `columns`
-            This parameter should be 
+        Parameters
+        ----------
+        `return_output`: bool = True
+            If `return_output` is True, invert method will return a dataframe after inverting 
+            the transformations.
+            When `transformed_df` is None, `return_output` will be False.
+        `remove_last_in_pipeline`
+            Whether to update the transformation pipeline, when running this method. 
         """
         if self.stationary is not None:
-            if self.stationary.last_transformation_in_pipeline()==self:
+            # if self.stationary.current_transformation==self:
                 inverted_dataframe=pd.DataFrame()
                 if transformed_df is None:
+                    return_output = False
                     transformed_df = self.stationary.tranformed_data
                 inverted_dataframe.index = transformed_df.index
                 if columns is None:
@@ -134,12 +160,15 @@ class BoxCox(Transformation):
                         transformed_df[column].values,
                         lambda_par
                     )
+                if return_output:
+                    return inverted_dataframe
                 self.stationary.tranformed_data = inverted_dataframe
-                self.stationary.remove_last_in_pipeline()
-            else:
-                print("The last data transformation was from a different transformation.\
-                       Please use the correct transformation")
+                # if remove_last_in_pipeline:
+                #     self.stationary.remove_last_in_pipeline()
+            # else:
+            #     Exception("The last data transformation was from a different transformation.\
+            #            Please use the correct transformation")
         else:
-            print("You should first associate a stationary pipeline to this transformation")
+            Exception("You should first associate a stationary pipeline to this transformation")
 
 
