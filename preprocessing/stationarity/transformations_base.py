@@ -17,7 +17,7 @@ class Transformation(ABC):
         return self._parameters
     
     @abstractmethod
-    def apply(self):
+    def transform(self):
         pass
     
     @abstractmethod

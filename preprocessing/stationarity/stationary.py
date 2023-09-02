@@ -44,7 +44,7 @@ class Stationary(ABC):
         # input serves as a backup of original data
         self.input = input
         self.tranformed_data = input.dataframe
-        self.transformation_idx = 0
+        self.transformation_idx = -1
     
     def add_transformation_to_pipeline(self,transformation:Transformation):
         self.transformation_pipeline.append(transformation)
@@ -62,20 +62,30 @@ class Stationary(ABC):
         return self.transformation_pipeline[self.transformation_idx]
     
     @property
+    def inverted_transformation_pipeline(self)-> list[Transformation]:
+        return list(reversed(self.transformation_pipeline))
+    
+
     def move_to_previous_transformation(self) -> None:
         if self.transformation_idx > 0:
             self.transformation_idx = self.transformation_idx - 1
-        else:
-            Exception("Current Transformation is already the first!")
+        # else:
+        #     Exception("Current Transformation is already the first!")
 
     @abstractmethod
     def stationarize(self):...
 
     def destationarize(self, dataframe:pd.DataFrame | None = None) -> pd.DataFrame | None:
-        for transformation in self.transformation_pipeline:
+        for transformation in self.inverted_transformation_pipeline:
+            # to invert all transformations, we need to start with the last transformation,
+            # hence the use of inverted_transformation_pipeline.
             transformation: Transformation
             if dataframe is not None:
-                dataframe = transformation.invert(dataframe,return_output = True)
+                dataframe = transformation.invert(
+                    transformed_df=dataframe,
+                    return_output = True
+                )
+                self.move_to_previous_transformation()
             else:
                 transformation.invert(self.tranformed_data,return_output=False)
         if dataframe is not None:

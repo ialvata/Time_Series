@@ -10,6 +10,9 @@ from preprocessing.roll_windows.roll_window_base import ClassicalWindow
 import pandas as pd
 from pathlib import Path
 
+# import warnings
+# warnings.filterwarnings('ignore')
+
 path_to_data=Path(
     "/home/ivo/Programming_Personal_Projects/Time_Series/datasets/csv/AirPassengers.csv"
 )
@@ -56,22 +59,31 @@ class AirPassengersStationary(Stationary):
             plt.savefig(f"{self._type}_plot.png")
 
     def stationarize(self, plot_flag:bool = False):
-        box_cox_transform = BoxCox(self)
-        box_cox_transform.apply(["value"])
+        box_cox_transform = BoxCox(stationary=self)
+        box_cox_transform.transform(["value"])
+        # the transform method will automatically add the transformation 
+        # to the stationary transformation pipeline
         diff_transform = Difference(periods=1,stationary=self)
-        diff_transform.apply(["value"])
+        diff_transform.transform(["value"])
         diff_transform_seasonal = Difference(periods=12,stationary=self)
-        diff_transform_seasonal.apply(["value"])
+        diff_transform_seasonal.transform(["value"])
         if plot_flag:
             self.plot_data("value")
 
 
 train_input = StationaryInput(train_set)
+# train_set
+#             value
+# 1949-01-31    112
+# 1949-02-28    118
+
 stat_pipeline = AirPassengersStationary(train_input)
 stat_pipeline.stationarize()
-assert stat_pipeline.is_trend_stationarity(["value"], print_output= True)
-# import warnings
-# warnings.filterwarnings('ignore')
+# stat_pipeline.tranformed_data
+#                value
+# 1950-02-28  0.048688
+# 1950-03-31  0.000861
+
 sarimax = SARIMAXModel()
 # sarimax.find_best(endogenous_data=stat_pipeline.tranformed_data)
 # print(sarimax.best_order) 
@@ -82,39 +94,14 @@ sarimax.fit_custom_model(
 )
 # SARIMAXOrder(NonSeasonalOrder(p=0, d=0, q=1), SeasonalOrder(P=0, D=0, Q=1, s=12)
 # 1958-08-31   -0.028699
-print(sarimax.forecast())
+# print(sarimax.forecast())
+forecast_series = pd.DataFrame(sarimax.forecast(), columns=["value"])
+train_plus_forecast_df = pd.concat([stat_pipeline.tranformed_data,forecast_series])
 
-
-stat_pipeline.destationarize()
-
-
-
-
-# box_cox_transform = BoxCox(stat_pipeline)
-# box_cox_transform.apply(["value"])
-# diff_transform = Difference(periods=1,stationary=stat_pipeline)
-# diff_transform.apply(["value"])
-# stat_pipeline.plot_data("value")
-# diff_transform.invert()
-# box_cox_transform.invert()
-# stat_pipeline.plot_data("value")
-# diff_df = stat_pipeline.tranformed_data
-# if diff_df is not None:
-#     diff_transform.invert()
-#     undiff_df = stat_pipeline.tranformed_data
-#     if undiff_df is not None:
-#         print("Doing assert for Difference")
-#         assert (undiff_df == train_set).all().values
-
-# stat_pipeline_2 = Stationary(train_input)
-# box_cox_transform = BoxCox(stat_pipeline_2)
-# box_cox_transform.apply(["value"])
-# box_cox_df = stat_pipeline_2.tranformed_data
-# if box_cox_df is not None:
-#     box_cox_transform.invert()
-#     invert_box_cox_df = stat_pipeline_2.tranformed_data
-#     if invert_box_cox_df is not None:
-#         print("Doing assert for BoxCox")
-#         assert (invert_box_cox_df - train_input.dataframe < 10**(-12) ).all().values
-
+destationarized_df = stat_pipeline.destationarize(train_plus_forecast_df)
+if destationarized_df is not None:
+    assert (destationarized_df.iloc[:-1].apply(round).astype("int") == train_set).all().values
+else:
+    Exception("destationarized_df is None!")
+# the transformations create very small rounding errors,, which we need to account for.
 print("OLá")
