@@ -90,9 +90,9 @@ class FeatureEngineering(ABC):
             periods = rolling_periods
         appended_lags = []
         for period in periods: 
-            rolling_df = self._dataframe.drop(columns=columns)
-            rolling_df.columns=[x+"_roll_avg_"+str(periods) for x in columns]
-            rolling_df.rolling(window = period)
+            rolling_df = self._dataframe[columns]
+            rolling_df.columns=[x+"_roll_avg_"+str(period) for x in columns]   
+            rolling_df = rolling_df.rolling(window = period).mean()
             appended_lags.append(rolling_df)
         if return_output:
             return (
@@ -147,9 +147,9 @@ class FeatureEngineering(ABC):
             timestamp_seconds = time_column.map(datetime.timestamp)
             sin_name = f"{seasonality.name}_sin_season"
             cos_name = f"{seasonality.name}_cos_season"
-            self.dataframe[sin_name] = (
+            self._dataframe[sin_name] = (
                 np.sin(timestamp_seconds * (2 * np.pi / seasonality))
             )
-            self.dataframe[cos_name] = (
+            self._dataframe[cos_name] = (
                 np.cos(timestamp_seconds * (2 * np.pi / seasonality))
             )
