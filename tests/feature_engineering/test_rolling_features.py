@@ -1,8 +1,6 @@
-from preprocessing.stationarity.stationary import StationaryInput
-from preprocessing.stationarity.stationary import Stationary
+
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.preprocess_input_base import PreprocessInput
-from preprocessing.stationarity.transformations import Difference,BoxCox
 from preprocessing.feature_engineering.feature_engineering import FeatureEngineering, TrigSeason
 import matplotlib.pyplot as plt
 
@@ -38,4 +36,7 @@ air_passengers_cleaned = air_passengers.dataframe
 feat_eng = FeatureEngineering(air_passengers_cleaned)
 feat_eng.add_trig_season(TrigSeason.YEAR)
 feat_eng.dataframe.plot.scatter("YEAR_sin_season","YEAR_cos_season").set_aspect("equal")
+feat_eng.add_rolling_features(["value","YEAR_sin_season"],[3,4])
+feat_eng._dataframe # this dataframe still has nan
+feat_eng.dataframe # this dataframe no longer has nan! :)
 print("OLA")
