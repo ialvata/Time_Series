@@ -21,10 +21,16 @@ class BaseScaler:
 class FeatureEngineering(ABC):
     def __init__(self, dataframe:pd.DataFrame, 
                  scaler:MinMaxScaler | StandardScaler | MaxAbsScaler | None = None):
-        self.dataframe = dataframe
+        self._dataframe = dataframe
         self.scaler = scaler
+    
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        return self._dataframe.dropna()
 
-    def add_lags(self, n_lags:int|list[int], drop_cols:list)-> pd.DataFrame:
+    def add_lags(self, 
+                 n_lags:int|list[int], columns:list,
+                 return_output: bool = False)-> pd.DataFrame | None:
         """
         Each row of df must be a separate time point, which will be transformed
         into a lag. This function will transform a matrix of dim -> n_samples x n_columns
@@ -41,16 +47,66 @@ class FeatureEngineering(ABC):
             lags = n_lags
         appended_lags = []
         for lag in lags: 
-            lag_df= self.dataframe.shift(lag).drop(columns=drop_cols)
+            lag_df= self._dataframe.shift(lag).drop(columns=columns)
             lag_df.columns=[x+"_lag_"+str(lag) for x in lag_df.columns]
             appended_lags.append(lag_df)
-        return (
-            pd.concat(appended_lags, axis=1)\
-                .dropna()\
-                # droping the empty cells caused by shifting
-                .reset_index(drop=True)\
-                # resetting index so that .loc[0] gives 1st row
-        )
+        if return_output:
+            return (
+                pd.concat(appended_lags, axis=1)\
+                    .dropna()\
+                    # droping the empty cells caused by shifting
+                    .reset_index(drop=True)\
+                    # resetting index so that .loc[0] gives 1st row
+            )
+        else:
+            full_list_df = [self._dataframe] + appended_lags
+            self._dataframe = pd.concat(full_list_df, axis=1)
+    
+    def add_rolling_features(self,
+                             columns:list[str],
+                             rolling_periods:int|list[int],
+                             return_output: bool = False)-> pd.DataFrame | None:
+        """
+        Parameters
+        ----------
+        `columns:list[str]`
+            A list with the columns names(`str`) for which we want to create the rolling\
+                features.
+
+        `rolling_periods:int|list[int]`
+            \tIf `rolling_periods` is int, then we internally create a list from 1 to \
+            `rolling_periods`+1, and use each element as a different period to create a \
+                feature.
+            \tIf `rolling_periods` is a list, then we just use the periods explicitely 
+            in the list.
+        
+        TODO:
+            Add other aggregation functions besides `mean`, such as `std`, `min`, and `max`.
+
+        """
+        if isinstance(rolling_periods,int):
+            periods = range(1,rolling_periods+1)
+        elif isinstance(rolling_periods,list):
+            periods = rolling_periods
+        appended_lags = []
+        for period in periods: 
+            rolling_df = self._dataframe.drop(columns=columns)
+            rolling_df.columns=[x+"_roll_avg_"+str(periods) for x in columns]
+            rolling_df.rolling(window = period)
+            appended_lags.append(rolling_df)
+        if return_output:
+            return (
+                pd.concat(appended_lags, axis=1)\
+                    .dropna()\
+                    # droping the empty cells caused by shifting
+                    .reset_index(drop=True)\
+                    # resetting index so that .loc[0] gives 1st row
+            )
+        else:
+            full_list_df = [self._dataframe] + appended_lags
+            self._dataframe = pd.concat(full_list_df, axis=1)
+
+
     def scale_features(self)-> None:
         """
         This method will scale *all* features in the self.dataframe
