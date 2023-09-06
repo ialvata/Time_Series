@@ -241,17 +241,29 @@ class FeatureEngineering(ABC):
                             "Invalid SeasonLength option! Please choose a valid one."
                         )
                 fourier_columns.append(np.hstack([fourier_array]))
-                fourier_names.append(np.hstack([sin_columns,cos_columns]))
-            pd.DataFrame(np.hstack(fourier_columns),
-                        columns = np.hstack(fourier_names))
-                
+                fourier_names.append(np.hstack([sin_columns,cos_columns]))                
         else:
             for column,season_len,num_term in zip(columns,seasonal_lengths,num_terms):
-                self._calculate_fourier_terms(
+                sin_columns = [
+                    f"sin_term_{num}_{season_len.name}" for num in range(1,num_term+1)
+                ]
+                cos_columns = [
+                    f"cos_term_{num}_{season_len.name}" for num in range(1,num_term+1)
+                ]
+                fourier_array = self._calculate_fourier_terms(
                             seasonal_cycle=np.array(self._dataframe[column]),
                             cycle_len=season_len,
                             n_fourier_terms=num_term
                         )
+                fourier_columns.append(np.hstack([fourier_array]))
+                fourier_names.append(np.hstack([sin_columns,cos_columns]))
+        fourier_df = pd.DataFrame(np.hstack(fourier_columns),
+                        columns = np.hstack(fourier_names),
+                        index=self._dataframe.index)
+        if return_output:
+            return fourier_df
+        else:
+            self._dataframe = pd.concat([self._dataframe,fourier_df], axis=1)
 
     def scale_features(self)-> None:
         """
