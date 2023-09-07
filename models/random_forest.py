@@ -2,9 +2,10 @@
 import pandas as pd
 import numpy as np
 from typing import Callable
-from statsmodels.stats.diagnostic import acorr_ljungbox as ljung_box
+import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 import optuna
+import matplotlib.figure
 
 
 class RandForestModel:
@@ -23,9 +24,36 @@ class RandForestModel:
         """
         self.model = RandomForestRegressor
         self.optimization_metric = optimization_metric
-        self.best_model = None
-        self.custom_model = None
+        self._best_model = None
+        self._custom_model = None
         self.residuals_test_df = None
+    
+    @property
+    def best_model(self):
+        if self._best_model is not None:
+            return self._best_model
+        else:
+            raise Exception(
+                "Please first set a best model!"
+                "Using the find_best method, it will set one for you."
+            )
+
+    @best_model.setter
+    def best_model(self, model:RandomForestRegressor):
+        self._best_model = model
+    
+    @property
+    def custom_model(self):
+        if self._custom_model is not None:
+            return self._custom_model
+        else:
+            raise Exception(
+                "Please first set a custom model!"
+            )
+
+    @custom_model.setter
+    def custom_model(self, model:RandomForestRegressor):
+        self._custom_model = model
 
     def find_best(
             self, 
@@ -106,8 +134,8 @@ class RandForestModel:
 
 
     def forecast(self,
-                 X_test:pd.DataFrame | pd.Series, signal_only=False, 
-                 use_best_model:bool = False, **kwargs) -> np.ndarray | :
+                 X_test:pd.DataFrame | pd.Series, 
+                 use_best_model:bool = False, **kwargs) -> np.ndarray:
         """
         Forecasts
         ----------------------- 
@@ -126,21 +154,43 @@ class RandForestModel:
             depending on input).
         """
         if use_best_model:
-            if self.best_model is not None:
-                return self.best_model.predict(X_test)
-            else:
-                raise Exception(
-                    "Please first find a best model! Only then run the forecast method."
-                )
+            return self.best_model.predict(X_test)
         else:
-            if self.custom_model is not None:
-                return self.custom_model.predict(X_test)
-            else:
-                raise Exception(
-                    "Please first fit a custom model! Only then run the forecast method."
-                )
+            return self.custom_model.predict(X_test)
+
+    def show_feat_importances(self,
+                              columns: list[str],
+                              use_best_model:bool = False) -> matplotlib.figure.Figure:
+        """
+        Parameters
+        ----------
+        `columns: list[str]`
+            This list should contain the columns names which were used during fitting. 
+        """
+        if use_best_model:
+            regr = self.best_model
+        else:
+            regr = self.custom_model
+        importances = regr.feature_importances_
+        std = np.std([tree.feature_importances_ for tree in regr.estimators_], axis=0)
+        forest_importances = pd.Series(importances, index=columns)
+
+        fig, ax = plt.subplots()
+        params = {'legend.fontsize': 'x-large',
+                'figure.figsize': (20, 7),
+                'axes.labelsize': 'x-large',
+                'axes.titlesize':'xx-large',
+                'xtick.labelsize':'x-large',
+                'ytick.labelsize':'x-large',
+                }
+
+        plt.rcParams.update(params)
+        forest_importances.plot.bar(yerr=std, ax=ax)
+        ax.set_title("Feature importances using MDI")
+        ax.set_ylabel("Mean decrease in impurity")
+        return fig
     
-    def check_residuals(self, lags:int | np.ndarray = [10], 
+    def check_residuals(self, lags: list[int] | np.ndarray = [10], 
                        use_best_model:bool = False,
                        plot_diagnostics:bool = False, 
                        **kwargs) -> bool:
@@ -173,11 +223,15 @@ class RandForestModel:
 
         if use_best_model:
             if plot_diagnostics:
-                self.best_model.plot_diagnostics(figsize=(10,8))
-            residuals = self.best_model.resid
+                pass
+            #     self.best_model.plot_diagnostics(figsize=(10,8))
+            # residuals = self.best_model.resid
+            raise Exception("Needs Implementation!")
         else:
             if plot_diagnostics:
-                self.custom_model.plot_diagnostics(figsize=(10,8))
-            residuals = self.custom_model.resid
-        self.residuals_test_df = ljung_box(residuals, lags = lags, **kwargs)
-        return self.residuals_test_df["lb_pvalue"].iloc[0]>0.05
+                pass
+            #     self.custom_model.plot_diagnostics(figsize=(10,8))
+            # residuals = self.custom_model.resid
+            raise Exception("Needs Implementation!")
+        # self.residuals_test_df = ljung_box(residuals, lags = lags, **kwargs)
+        # return self.residuals_test_df["lb_pvalue"].iloc[0]>0.05
