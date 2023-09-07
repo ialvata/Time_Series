@@ -31,6 +31,9 @@ class RandForestModel:
             self, 
             X_train:pd.DataFrame | pd.Series,
             y_train: pd.DataFrame | pd.Series,
+            X_val:pd.DataFrame | pd.Series | None = None,
+            y_val: pd.DataFrame | pd.Series | None = None,
+            num_obs_val: int = 10,
             show_progress_bar: bool = True,
             **kwargs
         ):
@@ -38,6 +41,18 @@ class RandForestModel:
         Parameters
         ----------
         """
+        
+        
+        if X_val is None:
+            X_split = X_train[:-num_obs_val]
+            X_val = X_train[-num_obs_val:]
+        else:
+            X_split = X_train
+        if y_val is None:
+            y_split = y_train[:-num_obs_val]
+            y_val = y_train[-num_obs_val:]
+        else:
+            y_split = y_train
         # defining an objective function to be used in the Optuna optimization study
         def objective(trial: optuna.Trial):     
             params = {
@@ -60,12 +75,7 @@ class RandForestModel:
                 ),
                 # "max_features":trial.suggest_float("max_features",0.001,1.0),
             }
-            rf_regr = RandomForestRegressor(**params, random_state=0)
-            n_obs = 10
-            X_split = X_train[:-n_obs]
-            y_split = y_train[:-n_obs]
-            X_val = X_train[-n_obs:]
-            y_val = y_train[-n_obs:]
+            rf_regr = RandomForestRegressor(**params, random_state=0)            
             rf_regr.fit(X_split,np.ravel(y_split))
             y_pred = rf_regr.predict(X_val)
             return self.optimization_metric(y_val,y_pred)
@@ -80,39 +90,31 @@ class RandForestModel:
         self.best_model.fit(X_train,np.ravel(y_train))
 
     def fit_custom_model(self, 
-            dataframe:pd.DataFrame | pd.Series,
-            exogenous_data: pd.DataFrame | pd.Series | None = None,
+            X_df:pd.DataFrame | pd.Series,
+            y_df:pd.DataFrame | pd.Series,
             **kwargs
         ):
-
-        self.custom_model= self.model.fit()
-
-
-    def forecast(self,steps=1, signal_only=False, use_best_model:bool = False, **kwargs):
         """
-        Out-of-sample forecasts
-        ----------------------- 
-        (The fitted model also has a predict method for interpolation
-        /in-sample forecasts)
+        Parameters
+        ----------
+        `kwargs`
+            These are keyword arguments compatible with `RandomForestRegressor` model of
+            Scikit-Learn.
+        """
+        self.custom_model = self.model(**kwargs, random_state=0)
+        self.custom_model.fit(X_df,y_df)
 
-        This was taken from the forecast docstring of the `MLEModel` class.
+
+    def forecast(self,
+                 X_test:pd.DataFrame | pd.Series, signal_only=False, 
+                 use_best_model:bool = False, **kwargs) -> np.ndarray | :
+        """
+        Forecasts
+        ----------------------- 
+        In-sample/Out-of-sample forecasts
 
         Parameters
         ----------
-        steps : int, str, or datetime, optional
-            If an integer, the number of steps to forecast from the end of the
-            sample. Can also be a date string to parse or a datetime type.
-            However, if the dates index does not have a fixed frequency, steps
-            must be an integer. Default is 1.
-        signal_only : bool, optional
-            Whether to compute forecasts of only the "signal" component of
-            the observation equation. Default is False. For example, the
-            observation equation of a time-invariant model is
-            :math:`y_t = d + Z \alpha_t + \varepsilon_t`, and the "signal"
-            component is then :math:`Z \alpha_t`. If this argument is set to
-            True, then forecasts of the "signal" :math:`Z \alpha_t` will be
-            returned. Otherwise, the default is for forecasts of :math:`y_t`
-            to be returned.
         **kwargs
             Additional arguments may required for forecasting beyond the end
             of the sample. See `FilterResults.predict` for more details.
@@ -120,32 +122,23 @@ class RandForestModel:
         Returns
         -------
         forecast : array_like
-            Out-of-sample forecasts (Numpy array or Pandas Series or DataFrame,
-            depending on input and dimensions).
-            Dimensions are `(steps x k_endog)`.
-
-        See Also
-        --------
-        predict
-            In-sample predictions and out-of-sample forecasts.
-        get_forecast
-            Out-of-sample forecasts and results **including** confidence intervals.
-        get_prediction
-            In-sample predictions / out-of-sample forecasts and results
-            including confidence intervals.
+            Aray of forecasts (Numpy array or Pandas Series or DataFrame,
+            depending on input).
         """
         if use_best_model:
             if self.best_model is not None:
-                return self.best_model.forecast(steps=steps, signal_only=signal_only, **kwargs)
+                return self.best_model.predict(X_test)
             else:
-                print("Please first find a best model! Only then run the forecast method.")
+                raise Exception(
+                    "Please first find a best model! Only then run the forecast method."
+                )
         else:
             if self.custom_model is not None:
-                return self.custom_model.forecast(
-                    steps=steps, signal_only=signal_only, **kwargs
-                )
+                return self.custom_model.predict(X_test)
             else:
-                print("Please first fit a custom model! Only then run the forecast method.")
+                raise Exception(
+                    "Please first fit a custom model! Only then run the forecast method."
+                )
     
     def check_residuals(self, lags:int | np.ndarray = [10], 
                        use_best_model:bool = False,
