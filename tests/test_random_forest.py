@@ -46,18 +46,16 @@ train_set,test_set = next(train_test_generator)
 
 ###############               Feature Engineering (TrainSet)              #####################
 # do we want to change in place in the train_set and test_set? This would be implicit...
-feat_eng_train = FeatureEngineering(train_set)
+feat_eng_train = FeatureEngineering(train_set, labels_names=["value"])
 feat_eng_train.add_fourier_features([SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR])
 
 ##############                    Model Instatiation                   #####################
 rf_model = RandForestModel(optimization_metric = mse)
 rf_model.find_best(feat_eng_train.features, feat_eng_train.labels)
 
-###############               Feature Engineering (TestSet)              #####################
-feat_eng_test = FeatureEngineering(test_set)
-feat_eng_test.add_fourier_features([SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR])
 ##############                    Model Forecast                   #####################
-rf_model.forecast(feat_eng_test.features)
+rf_model.forecast(feat_eng_train.features, use_best_model = True)
+
 
 
 print("Olá")
