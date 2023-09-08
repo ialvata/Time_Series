@@ -5,6 +5,7 @@ import numpy as np
 from enum import IntEnum
 from datetime import datetime
 from sklearn.preprocessing import MinMaxScaler, StandardScaler,MaxAbsScaler
+from preprocessing.data_spliting.label_features import LabelFeatSet
 
 class TrigSeason(IntEnum):
     """
@@ -33,14 +34,36 @@ class SeasonLength(IntEnum):
 
 
 class FeatureEngineering(ABC):
-    def __init__(self, dataframe:pd.DataFrame, 
-                 scaler:MinMaxScaler | StandardScaler | MaxAbsScaler | None = None):
+    def __init__(self, dataframe:pd.DataFrame,
+                 labels_names:list[str],
+                 scaler:MinMaxScaler | StandardScaler | MaxAbsScaler | None = None,
+                 ):
         self._dataframe = dataframe
         self.scaler = scaler
-    
+        self.labels_names = sorted(labels_names)
+
     @property
     def dataframe(self) -> pd.DataFrame:
         return self._dataframe.dropna()
+    
+    @property
+    def labels(self)-> pd.DataFrame | pd.Series:
+        return self.dataframe[self.labels_names]
+    
+    @property
+    def features(self)-> pd.DataFrame | pd.Series:
+        """
+        Anything which is not a label, will be considered a feature.
+        """
+        # if we do feature engineering, we may want to update self.dataframe after
+        # TrainSet initialization. 
+        # I'm not sure... Provisional pattern.
+        columns_set = set(self.dataframe.columns)
+        self.feature_columns = sorted(
+            list(columns_set.difference(self.labels_names))
+        )
+        return self.dataframe[self.feature_columns]
+    
 
     def add_lags(self, 
                  n_lags:int|list[int], columns:list,
