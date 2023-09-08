@@ -13,6 +13,7 @@ from preprocessing.feature_engineering.feature_engineering import (
 import pandas as pd
 from pathlib import Path
 from models.random_forest import RandForestModel
+from evaluation.cross_validation import CrossValidation
 
 path_to_data=Path(
     "/home/ivo/Programming_Personal_Projects/Time_Series/datasets/csv/AirPassengers.csv"
@@ -49,13 +50,24 @@ train_set,test_set = next(train_test_generator)
 feat_eng_train = FeatureEngineering(train_set, labels_names=["value"])
 feat_eng_train.add_fourier_features([SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR])
 
-##############                    Model Instatiation                   #####################
-rf_model = RandForestModel(optimization_metric = mse)
-rf_model.find_best(feat_eng_train.features, feat_eng_train.labels)
+#################                   Model Instatiation                  #######################
+rf_model_1 = RandForestModel(optimization_metric = mse)
+rf_model_2 = RandForestModel(optimization_metric = mse)
+#################                    Cross-Validation                  ########################
+class AirPassengersCV(CrossValidation):
+    _type = "AirPassenger"
 
-##############                    Model Forecast                   #####################
-rf_model.forecast(feat_eng_train.features, use_best_model = True)
+    def create_features
 
+cross_val = CrossValidation(
+    models = [rf_model_1,rf_model_2],
+    metrics = [metric_1, metric_2],
+    data_generator = train_test_generator,
+    feat_eng_train_test = [feat_eng_train, feat_eng_test],
+)
+
+cross_val.evaluate()
+cross_val.show_results() # should return
 
 
 print("Olá")
