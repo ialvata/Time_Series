@@ -16,20 +16,11 @@ class RollWindow(ABC):
                  label_columns: list[str] | None = None):
         pass
 
-    # def create_folds(self) -> Generator[tuple[pd.DataFrame, pd.DataFrame],None,None]:
-        
-    #     for index in range(self.train_length,self.dataframe.shape[0], self.window):
-    #         yield (self.dataframe.iloc[:index], self.dataframe.iloc[[index]])
-
-    # def __repr__(self) -> str:
-    #     return f"FoldData(feature_shape= {self.feature_train.shape}, \
-    #         label_shape= {self.label_test.shape})"
-
-
 class ClassicalWindow(RollWindow):
     def __init__(
         self,
         dataframe:pd.DataFrame,
+        labels_names:list[str],
         window:int = 1,
         train_prop:float = 0.9,
         **kwargs
@@ -45,11 +36,14 @@ class ClassicalWindow(RollWindow):
         self.train_length = int(train_prop*dataframe.shape[0])
         self.dataframe = dataframe
         self.window = window
+        self.labels_names = labels_names
 
     def create_folds(self) -> Generator[tuple[pd.DataFrame, pd.DataFrame],None,None]:
         
         for index in range(self.train_length,self.dataframe.shape[0], self.window):
-            yield (self.dataframe.iloc[:index], self.dataframe.iloc[[index]])
+            yield (
+                self.dataframe.iloc[:index],self.dataframe.iloc[[index]]
+            )
 
     # def __repr__(self) -> str:
     #     return f"FoldData(feature_shape= {self.feature_train.shape}, \
