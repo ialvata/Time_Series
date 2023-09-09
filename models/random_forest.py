@@ -61,10 +61,10 @@ class RandForestModel:
             y_train: pd.DataFrame | pd.Series,
             X_val:pd.DataFrame | pd.Series | None = None,
             y_val: pd.DataFrame | pd.Series | None = None,
-            num_obs_val: int = 10,
+            num_obs_val: int = 10, # This needs to be changed to a proportion
             show_progress_bar: bool = True,
             **kwargs
-        ):
+        )-> None:
         """
         Parameters
         ----------
@@ -121,7 +121,7 @@ class RandForestModel:
             X_df:pd.DataFrame | pd.Series,
             y_df:pd.DataFrame | pd.Series,
             **kwargs
-        ):
+        )-> None:
         """
         Parameters
         ----------
