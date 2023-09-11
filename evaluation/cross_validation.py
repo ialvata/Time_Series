@@ -2,6 +2,8 @@ from models.model_base import ModelBase
 from typing import Callable,Generator
 from enum import Enum
 from preprocessing.feature_engineering.feature_engineering import FeatureEngineering
+import pandas as pd
+import numpy as np
 
 class TuningOption(Enum):
     """
@@ -24,6 +26,12 @@ class TuningOption(Enum):
     FIT_PARAM_ONLY = 2
     NO_FITTING = 3
 
+class TrialResults:
+    def __init__(self, 
+        forecast:float|pd.DataFrame|pd.Series|np.ndarray, hyperparameters:dict | None = None
+    ) -> None:
+        self.hyperparameters = hyperparameters
+        self.forecast = forecast
 
 class CrossValidation:
     def __init__(self, models:list[ModelBase],metrics: list[Callable],
@@ -34,39 +42,65 @@ class CrossValidation:
         self.data_generator = data_generator
         self.feat_eng = feat_eng
         self.forecasts = None
-
-
-    def _evaluate_fit_param_only(self):
-        """
-        Method for the case when we use the whole training set to fit a model with 
-        hyperparameters already predefined
-        """
-        ...
-
-    def _evaluate_no_fitting(self):...
-
-    def _evaluate_fit_hyper_param(self):...
+        self.history = []
+        self.observations = []
 
     def evaluate(self, tuning_option: TuningOption):
         for model in self.models:
             for train_set,test_set  in self.data_generator:
                 #####################              Feature Engineering             ####################
-                self.feat_eng.set_datasets(train = train_set, test = test_set)
-                self.feat_eng.create_features(train_set)
-                self.feat_eng.create_features(test_set)
+                self.feat_eng.set_datasets(train_set = train_set, test_set = test_set)
+                # outside of cross validation
+                # in the main code self.feat_eng.add_pipeline()
+                self.feat_eng.create_features(destiny_set = "train")
+                self.feat_eng.create_features(destiny_set = "test")
                 ####################               Evaluation type                #####################
                 match tuning_option:
                     case TuningOption.FIT_HYPER_PARAM:
-                        ...
-                        model.forecast(X_test=self.feat_eng.features,use_best_model= True)
+                        model.find_best(
+                            X_train=self.feat_eng.train_set.features,
+                            y_train=self.feat_eng.train_set.labels,
+                        )
+                        
+                        forecast = model.forecast(
+                            X_test=self.feat_eng.test_set.features,use_best_model= True
+                        )
+                        self.history.append(
+                            TrialResults(
+                                hyperparameters=model.best_hyperparameters,
+                                forecast=forecast                                
+                            )
+                        )
+                        self.observations.append(test_set)
                     case TuningOption.FIT_PARAM_ONLY:
-                        ...
-                        model.forecast(X_test=self.feat_eng.features, use_best_model= False)
+                        model.fit_custom_model(
+                            X_train=self.feat_eng.train_set.features,
+                            y_train=self.feat_eng.train_set.labels
+                        )
+                        forecast = model.forecast(
+                            X_test=self.feat_eng.test_set.features, use_best_model= False
+                        )
+                        self.history.append(
+                            TrialResults(forecast=forecast)
+                        )
+                        self.observations.append(test_set)
                     case TuningOption.NO_FITTING:
-                        ...
-                        model.forecast(X_test=self.feat_eng.features, use_best_model= False)
-                
-                        
-                        
+                        forecast = model.forecast(
+                            X_test=self.feat_eng.test_set.features, use_best_model= False
+                        )
+                        self.history.append(
+                            TrialResults(forecast=forecast)
+                        )
+                        self.observations.append(test_set)
 
-    def show_results(self):...
+    def show_results(self) -> pd.DataFrame:
+        forecasts = [trial_res.forecast for trial_res in self.history]
+        metrics = {
+            f"{metric.name}": metric(predictions = forecasts, observations = self.observations)
+            for metric in self.metrics
+        }
+        table_res = pd.DataFrame(metrics)
+        table_res.style.format(
+            '{:.4f}'
+        ).highlight_min(color='green', subset=["MAE","MSE","meanMASE"])
+        return table_res
