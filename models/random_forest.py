@@ -9,7 +9,7 @@ import matplotlib.figure
 
 
 class RandForestModel:
-    def __init__(self, optimization_metric: Callable) -> None:
+    def __init__(self, optimization_metric: Callable, **hyperparameters) -> None:
         """
         This class will use by default the RandomForestRegressor by Scikit-Learn.
 
@@ -27,6 +27,7 @@ class RandForestModel:
         self._best_model = None
         self._custom_model = None
         self.residuals_test_df = None
+        self.hyperparameters = {**hyperparameters}
     
     @property
     def best_model(self):
@@ -118,8 +119,8 @@ class RandForestModel:
         self.best_model.fit(X_train,np.ravel(y_train))
 
     def fit_custom_model(self, 
-            X_df:pd.DataFrame | pd.Series,
-            y_df:pd.DataFrame | pd.Series,
+            X_train:pd.DataFrame | pd.Series,
+            y_train:pd.DataFrame | pd.Series,
             **kwargs
         )-> None:
         """
@@ -127,10 +128,12 @@ class RandForestModel:
         ----------
         `kwargs`
             These are keyword arguments compatible with `RandomForestRegressor` model of
-            Scikit-Learn.
+            Scikit-Learn, including hyperparameters.
         """
+        if kwargs is None:
+            kwargs = self.hyperparameters
         self.custom_model = self.model(**kwargs, random_state=0)
-        self.custom_model.fit(X_df,y_df)
+        self.custom_model.fit(X_train,y_train)
 
 
     def forecast(self,
