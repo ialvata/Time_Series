@@ -43,23 +43,27 @@ air_passengers_cleaned = air_passengers.dataframe
 ###############       Dataset splitting into Train and Test set           #####################
 rol_fold = ClassicalWindow(air_passengers_cleaned, labels_names=["value"],train_prop = 0.8)
 train_test_generator = rol_fold.create_folds()
-train_set,test_set = next(train_test_generator)
+
 
 ###############               Feature Engineering (TrainSet)              #####################
 # do we want to change in place in the train_set and test_set? This would be implicit...
-feat_eng_train = FeatureEngineering(train_set, labels_names=["value"])
-feat_eng_train.add_fourier_features([SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR])
+# setting the dataset on which to create the features should be allowed to be done at a later
+# stage, such as inside the CrossValidation class.
+feat_eng = FeatureEngineering(labels_names=["value"])
+feat_eng.add_to_pipeline(
+    FourierFeature([SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR])
+)
 
-#################                   Model Instatiation                  #######################
-rf_model_1 = RandForestModel(optimization_metric = mse)
-rf_model_2 = RandForestModel(optimization_metric = mse)
+#################                   Model Instantiation                  #######################
+rf_model_1 = RandForestModel(optimization_metric = mse, max_depth = 10)
+rf_model_2 = RandForestModel(optimization_metric = mse, max_features= "log2")
 
 #################                    Cross-Validation                  ########################
 cross_val = CrossValidation(
     models = [rf_model_1,rf_model_2],
     metrics = [metric_1, metric_2],
     data_generator = train_test_generator,
-    feat_eng_train_test = [feat_eng_train, feat_eng_test],
+    feat_eng = feat_eng, # in the future it will take a list of several different pipelines.
 )
 
 cross_val.evaluate(tuning_option = TuningOption.FIT_PARAM_ONLY)
