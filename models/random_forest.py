@@ -9,7 +9,7 @@ import matplotlib.figure
 
 
 class RandForestModel:
-    def __init__(self, optimization_metric: Callable, **hyperparameters) -> None:
+    def __init__(self, optimization_metric: Callable|None = None, **hyperparameters) -> None:
         """
         This class will use by default the RandomForestRegressor by Scikit-Learn.
 
@@ -28,6 +28,7 @@ class RandForestModel:
         self._custom_model = None
         self.residuals_test_df = None
         self.hyperparameters = {**hyperparameters}
+        self.best_hyperparameters = None
     
     @property
     def best_model(self):
@@ -70,8 +71,6 @@ class RandForestModel:
         Parameters
         ----------
         """
-        
-        
         if X_val is None:
             X_split = X_train[:-num_obs_val]
             X_val = X_train[-num_obs_val:]
@@ -82,6 +81,8 @@ class RandForestModel:
             y_val = y_train[-num_obs_val:]
         else:
             y_split = y_train
+        if self.optimization_metric is None:
+            raise Exception("No optimization metric for RandForestModel! Please set one.")
         # defining an objective function to be used in the Optuna optimization study
         def objective(trial: optuna.Trial):     
             params = {
@@ -117,6 +118,7 @@ class RandForestModel:
         # defining best model and fitting it.
         self.best_model = RandomForestRegressor(**(study.best_trial.params),random_state=0)
         self.best_model.fit(X_train,np.ravel(y_train))
+        self.best_hyperparameters = study.best_trial.params
 
     def fit_custom_model(self, 
             X_train:pd.DataFrame | pd.Series,
