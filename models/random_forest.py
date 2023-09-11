@@ -28,7 +28,7 @@ class RandForestModel:
         self._custom_model = None
         self.residuals_test_df = None
         self.hyperparameters = {**hyperparameters}
-        self.best_hyperparameters = None
+        self.best_hyperparameters = {}
     
     @property
     def best_model(self):
