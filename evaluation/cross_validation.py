@@ -1,7 +1,8 @@
 from models.model_base import ModelBase
-from typing import Callable,Generator
+from typing import Generator
 from enum import Enum
 from preprocessing.feature_engineering.feature_engineering import FeatureEngineering
+from evaluation.metrics import MetricBase
 import pandas as pd
 import numpy as np
 
@@ -34,8 +35,8 @@ class TrialResults:
         self.forecast = forecast
 
 class CrossValidation:
-    def __init__(self, models:list[ModelBase],metrics: list[Callable],
-                 data_generator:Generator, feat_eng = FeatureEngineering
+    def __init__(self, models:list[ModelBase],metrics: list[MetricBase],
+                 data_generator:Generator, feat_eng: FeatureEngineering
                  ) -> None:
         self.models = models
         self.metrics = metrics
@@ -94,9 +95,11 @@ class CrossValidation:
                         self.observations.append(test_set)
 
     def show_results(self) -> pd.DataFrame:
-        forecasts = [trial_res.forecast for trial_res in self.history]
+        forecasts = np.ndarray([trial_res.forecast for trial_res in self.history])
         metrics = {
-            f"{metric.name}": metric(predictions = forecasts, observations = self.observations)
+            f"{metric.name}": metric.compute(
+                predictions = forecasts, observations = self.observations
+            )
             for metric in self.metrics
         }
         table_res = pd.DataFrame(metrics)
