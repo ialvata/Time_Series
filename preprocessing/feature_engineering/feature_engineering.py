@@ -66,6 +66,28 @@ class FeatureEngineering(ABC):
         self.train_set = LabelFeatSet(train_set, labels_names=self.labels_names)
         self.test_set = LabelFeatSet(test_set, labels_names=self.labels_names)
 
+    def create_features(self, destiny_set: str, dataframe: pd.DataFrame | None = None) -> None:
+        """
+        Parameters
+        ----------
+        `destiny_set: {"train","test"}`
+        """
+        match destiny_set:
+            case "train":
+                resulting_df = self.train_set.dataframe
+            case "test":
+                resulting_df = self.train_set.dataframe
+            case _:
+                raise Exception("Invalid option for destiny_set!")
+        for feature in self.pipeline:
+            feature:FeatureBase
+            resulting_df = feature.create_features(resulting_df)
+        match destiny_set:
+            case "train":
+                self.train_set.dataframe = resulting_df
+            case "test":
+                self.test_set.dataframe = resulting_df
+
     # def add_lags(self, 
     #              n_lags:int|list[int], columns:list,
     #              return_output: bool = False)-> pd.DataFrame | None:
