@@ -12,7 +12,7 @@ class MetricBase(Protocol):
     name:str
     def compute(self, 
                 predictions: np.ndarray | pd.DataFrame | pd.Series, 
-                observations: np.ndarray | pd.DataFrame | pd.Series)-> np.float16:
+                observations: np.ndarray | pd.DataFrame | pd.Series)-> float:
         ...
 
 class MAE:
@@ -20,7 +20,7 @@ class MAE:
     name:str = "MAE"
     @classmethod
     def compute(cls, predictions: np.ndarray | pd.DataFrame | pd.Series, 
-                observations: np.ndarray | pd.DataFrame | pd.Series) -> np.float16:
+                observations: np.ndarray | pd.DataFrame | pd.Series) -> float:
         return median_absolute_error(y_pred=predictions, y_true=observations) 
 
 class MAPE:
@@ -44,5 +44,5 @@ class RMSE:
     name:str = "RMSE"
     @classmethod
     def compute(cls, predictions: np.ndarray | pd.DataFrame | pd.Series, 
-                observations: np.ndarray | pd.DataFrame | pd.Series) -> float | np.ndarray:
+                observations: np.ndarray | pd.DataFrame | pd.Series) -> float:
         return np.sqrt(mean_squared_error(y_pred=predictions, y_true=observations))
