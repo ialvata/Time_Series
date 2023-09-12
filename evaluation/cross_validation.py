@@ -72,7 +72,7 @@ class CrossValidation:
                                 forecast=forecast                                
                             )
                         )
-                        self.observations.append(test_set)
+                        
                     case TuningOption.FIT_PARAM_ONLY:
                         model.fit_custom_model(
                             X_train=self.feat_eng.train_set.features,
@@ -84,7 +84,6 @@ class CrossValidation:
                         self.history.append(
                             TrialResults(forecast=forecast)
                         )
-                        self.observations.append(test_set)
                     case TuningOption.NO_FITTING:
                         forecast = model.forecast(
                             X_test=self.feat_eng.test_set.features, use_best_model= False
@@ -92,18 +91,18 @@ class CrossValidation:
                         self.history.append(
                             TrialResults(forecast=forecast)
                         )
-                        self.observations.append(test_set)
+        self.observations = self.feat_eng.test_set.labels
 
     def show_results(self) -> pd.DataFrame:
         forecasts = np.ndarray([trial_res.forecast for trial_res in self.history])
         metrics = {
             f"{metric.name}": metric.compute(
-                predictions = forecasts, observations = self.observations
+                predictions = forecasts, observations = np.array(self.observations)
             )
             for metric in self.metrics
         }
         table_res = pd.DataFrame(metrics)
         table_res.style.format(
             '{:.4f}'
-        ).highlight_min(color='green', subset=["MAE","MSE","meanMASE"])
+        ).highlight_min(color='green')
         return table_res
