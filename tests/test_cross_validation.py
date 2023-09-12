@@ -1,19 +1,15 @@
-from sklearn.metrics import (
-    median_absolute_error as mae,
-    mean_absolute_percentage_error as mape,
-    mean_squared_error as mse,
-)
-from math import sqrt
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.roll_windows.roll_window_base import ClassicalWindow
 from preprocessing.feature_engineering.feature_engineering import (
-    FeatureEngineering, SeasonLength
+    FeatureEngineering
 )
+from preprocessing.feature_engineering.fourier import FourierFeature,SeasonLength
 import pandas as pd
 from pathlib import Path
 from models.random_forest import RandForestModel
 from evaluation.cross_validation import CrossValidation, TuningOption
+from evaluation.metrics import MSE,MAE,MAPE,RMSE
 
 path_to_data=Path(
     "/home/ivo/Programming_Personal_Projects/Time_Series/datasets/csv/AirPassengers.csv"
@@ -51,17 +47,24 @@ train_test_generator = rol_fold.create_folds()
 # stage, such as inside the CrossValidation class.
 feat_eng = FeatureEngineering(labels_names=["value"])
 feat_eng.add_to_pipeline(
-    FourierFeature([SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR])
+    features = [
+        FourierFeature(
+            seasonal_lengths = [SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR]
+        )
+    ]
 )
 
-#################                   Model Instantiation                  #######################
-rf_model_1 = RandForestModel(optimization_metric = mse, max_depth = 10)
-rf_model_2 = RandForestModel(optimization_metric = mse, max_features= "log2")
+#################                   Model Instantiation                 #######################
+rf_model_1 = RandForestModel(optimization_metric = MSE, max_depth = 10)
+rf_model_2 = RandForestModel(optimization_metric = MSE, max_features= "log2")
+
+#################                   Metrics Instantiation               #######################
+
 
 #################                    Cross-Validation                  ########################
 cross_val = CrossValidation(
     models = [rf_model_1,rf_model_2],
-    metrics = [metric_1, metric_2],
+    metrics = [MSE, RMSE, MAPE, MAE],
     data_generator = train_test_generator,
     feat_eng = feat_eng, # in the future it will take a list of several different pipelines.
 )
