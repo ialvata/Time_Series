@@ -1,7 +1,7 @@
 
 import pandas as pd
 import numpy as np
-from typing import Callable
+from evaluation.metrics import MetricBase
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 import optuna
@@ -9,7 +9,7 @@ import matplotlib.figure
 
 
 class RandForestModel:
-    def __init__(self, optimization_metric: Callable|None = None, **hyperparameters) -> None:
+    def __init__(self, optimization_metric: MetricBase|None = None, **hyperparameters) -> None:
         """
         This class will use by default the RandomForestRegressor by Scikit-Learn.
 
@@ -20,7 +20,11 @@ class RandForestModel:
         `optimization_metric:Callable`
             This should be a function that returns a float. This function will be used for 
             hyperparameter optimization, in the `find_best` method.
-            Note: This function will be MINIMIZED during optimization. 
+            Note: This function will be MINIMIZED during optimization.
+        `hyperparameters:` remaining keyword arguments
+            All remaining keyword are gathered under the hyperparameters umbrella variable in
+            form of a dictionary. These entries should be compatible with the input for the
+            RandomForestRegressor model by Scikit-Learn.
         """
         self.model = RandomForestRegressor
         self.optimization_metric = optimization_metric
@@ -84,7 +88,7 @@ class RandForestModel:
         if self.optimization_metric is None:
             raise Exception("No optimization metric for RandForestModel! Please set one.")
         # defining an objective function to be used in the Optuna optimization study
-        def objective(trial: optuna.Trial):     
+        def objective(trial: optuna.Trial) -> float:     
             params = {
                 'n_jobs': -1,
                 'criterion':"squared_error", # trial.suggest_categorical(
@@ -108,7 +112,11 @@ class RandForestModel:
             rf_regr = RandomForestRegressor(**params, random_state=0)            
             rf_regr.fit(X_split,np.ravel(y_split))
             y_pred = rf_regr.predict(X_val)
-            return self.optimization_metric(y_val,y_pred)
+            result = self.optimization_metric.compute(y_val,y_pred) #type:ignore
+            if result is float:
+                return result
+            else:
+                raise Exception("Computing the chosen metric returns a non-floating number")
         # creating optuna study to find best parameters
         study = optuna.create_study(direction="minimize")
         optuna.logging.set_verbosity(optuna.logging.WARNING)
