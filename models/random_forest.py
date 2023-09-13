@@ -147,7 +147,10 @@ class RandForestModel:
             #     raise Exception("Hyperparameters have not been defined!")
             hyperparameters = self.hyperparameters
         self.custom_model = self.model(**hyperparameters, random_state=0)
-        self.custom_model.fit(X_train,y_train)
+        if y_train.shape[1] == 1:
+            self.custom_model.fit(X_train,np.ravel(y_train))
+        else:
+            self.custom_model.fit(X_train,y_train)
 
 
     def forecast(self,

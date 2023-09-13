@@ -57,7 +57,7 @@ class CrossValidation:
 
     def evaluate(self, tuning_option: TuningOption):
         for trial,(train_set,test_set)  in enumerate(self.data_generator):
-            print(len(train_set))
+            # print(len(train_set))
             ###################              Feature Engineering              #################
             self.feat_eng.set_datasets(train_set = train_set, test_set = test_set)
             # outside of cross validation
@@ -117,9 +117,6 @@ class CrossValidation:
 
     def show_results(self, model_names:str | list[str] |None = None) -> pd.DataFrame:
         """
-        TODO:
-            `model_names:str|list[str]|None = None` 
-                We should implement for the case of list[str]-
         """
         if model_names is None:
             model_names = [model.name for model in self.models]
