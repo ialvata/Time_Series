@@ -1,18 +1,14 @@
-from sklearn.metrics import (
-    median_absolute_error as mae,
-    mean_absolute_percentage_error as mape,
-    mean_squared_error as mse,
-)
-from math import sqrt
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.preprocess_base import Preprocess
 from preprocessing.roll_windows.roll_window_base import ClassicalWindow
 from preprocessing.feature_engineering.feature_engineering import (
-    FeatureEngineering, SeasonLength
+    FeatureEngineering
 )
+from preprocessing.feature_engineering.fourier import FourierFeature,SeasonLength
 import pandas as pd
 from pathlib import Path
 from models.random_forest import RandForestModel
+from evaluation.metrics import MSE,MAE,MAPE,RMSE
 
 path_to_data=Path(
     "/home/ivo/Programming_Personal_Projects/Time_Series/datasets/csv/AirPassengers.csv"
@@ -46,15 +42,21 @@ train_set,test_set = next(train_test_generator)
 
 ###############               Feature Engineering (TrainSet)              #####################
 # do we want to change in place in the train_set and test_set? This would be implicit...
-feat_eng_train = FeatureEngineering(train_set, labels_names=["value"])
-feat_eng_train.add_fourier_features([SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR])
-
+feat_eng = FeatureEngineering(dataframe=train_set, labels_names=["value"])
+feat_eng.add_to_pipeline(
+    features = [
+        FourierFeature(
+            seasonal_lengths = [SeasonLength.DAY_OF_YEAR,SeasonLength.MONTH_OF_YEAR]
+        )
+    ]
+)
+feat_eng.create_features(destiny_set = "feat_eng")
 ##############                    Model Instatiation                   #####################
-rf_model = RandForestModel(optimization_metric = mse)
-rf_model.find_best(feat_eng_train.features, feat_eng_train.labels)
+rf_model = RandForestModel(optimization_metric = MSE)
+rf_model.find_best(feat_eng.features, feat_eng.labels)
 
 ##############                    Model Forecast                   #####################
-rf_model.forecast(feat_eng_train.features, use_best_model = True)
+rf_model.forecast(feat_eng.features, use_best_model = True)
 
 
 
