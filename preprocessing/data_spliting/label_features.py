@@ -19,9 +19,6 @@ class LabelFeatSet:
     def features(self)-> pd.DataFrame | pd.Series:
         # if we do feature engineering, we may want to update self.dataframe after
         # TrainSet initialization. 
-        # I'm not sure... Provisional pattern.
-        columns_set = set(self.dataframe.columns)
-        self.feature_columns = sorted(
-            list(columns_set.difference(self.labels_names))
-        )
+        self.feature_columns = self.dataframe.columns.drop(self.labels_names)
+        # drop preserves list order.
         return self.dataframe[self.feature_columns]
