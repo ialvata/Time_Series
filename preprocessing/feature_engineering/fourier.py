@@ -165,7 +165,8 @@ class FourierFeature:
                             )
                     fourier_columns.append(np.hstack([fourier_array]))
                     fourier_names.append(np.hstack([sin_columns,cos_columns]))
-            return pd.DataFrame(np.hstack(fourier_columns),
+            fourier_df = pd.DataFrame(np.hstack(fourier_columns),
                             columns = np.hstack(fourier_names),
                             index=dataframe.index)
+            return pd.concat([dataframe,fourier_df],axis=1)
     
