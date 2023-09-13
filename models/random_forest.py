@@ -9,7 +9,8 @@ import matplotlib.figure
 
 
 class RandForestModel:
-    def __init__(self, optimization_metric: MetricBase|None = None, 
+    def __init__(self, name: str = "RandForestModel",
+                 optimization_metric: MetricBase | None = None, 
                  hyperparameters:dict = {}) -> None:
         """
         This class will use by default the RandomForestRegressor by Scikit-Learn.
@@ -33,6 +34,7 @@ class RandForestModel:
         self.residuals_test_df = None
         self.hyperparameters = hyperparameters
         self.best_hyperparameters = {}
+        self.name = name
     
     @property
     def best_model(self):
