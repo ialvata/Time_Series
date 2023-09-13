@@ -66,17 +66,26 @@ class FeatureEngineering(ABC):
         self.train_set = LabelFeatSet(train_set, labels_names=self.labels_names)
         self.test_set = LabelFeatSet(test_set, labels_names=self.labels_names)
 
-    def create_features(self, destiny_set: str, dataframe: pd.DataFrame | None = None) -> None:
+    def create_features(self, destiny_set: str, dataframe: pd.DataFrame | None = None
+    ) -> pd.DataFrame | None:
         """
         Parameters
         ----------
-        `destiny_set: {"train","test"}`
+        `destiny_set: {"train","test", "feat_eng", "input"}`
         """
         match destiny_set:
             case "train":
                 resulting_df = self.train_set.dataframe
             case "test":
                 resulting_df = self.train_set.dataframe
+            case "feat_eng":
+                if self._dataframe is None:
+                    raise Exception("Missing dataframe associated to FeatEngineering!")
+                resulting_df = self._dataframe
+            case "input":
+                if dataframe is None:
+                    raise Exception("Missing dataframe input in create_features!")
+                resulting_df = dataframe
             case _:
                 raise Exception("Invalid option for destiny_set!")
         for feature in self.pipeline:
@@ -87,6 +96,12 @@ class FeatureEngineering(ABC):
                 self.train_set.dataframe = resulting_df
             case "test":
                 self.test_set.dataframe = resulting_df
+            case "feat_eng":
+                self._dataframe = resulting_df
+            case "input":
+                return resulting_df
+            
+            
 
     # def add_lags(self, 
     #              n_lags:int|list[int], columns:list,
