@@ -9,7 +9,8 @@ import matplotlib.figure
 
 
 class RandForestModel:
-    def __init__(self, optimization_metric: MetricBase|None = None, **hyperparameters) -> None:
+    def __init__(self, optimization_metric: MetricBase|None = None, 
+                 hyperparameters:dict = {}) -> None:
         """
         This class will use by default the RandomForestRegressor by Scikit-Learn.
 
@@ -21,9 +22,8 @@ class RandForestModel:
             This should be a function that returns a float. This function will be used for 
             hyperparameter optimization, in the `find_best` method.
             Note: This function will be MINIMIZED during optimization.
-        `hyperparameters:` remaining keyword arguments
-            All remaining keyword are gathered under the hyperparameters umbrella variable in
-            form of a dictionary. These entries should be compatible with the input for the
+        `hyperparameters: dict | None = None`
+            The entries of this dictionary should be compatible with the input for the
             RandomForestRegressor model by Scikit-Learn.
         """
         self.model = RandomForestRegressor
@@ -31,7 +31,7 @@ class RandForestModel:
         self._best_model = None
         self._custom_model = None
         self.residuals_test_df = None
-        self.hyperparameters = {**hyperparameters}
+        self.hyperparameters = hyperparameters
         self.best_hyperparameters = {}
     
     @property
@@ -95,7 +95,7 @@ class RandForestModel:
                     # 'criterion', 
                     # ["absolute_error","squared_error", "friedman_mse", "poisson"]
                 # ),
-                "n_estimators":500,
+                "n_estimators":100, #500 
                 "max_depth":trial.suggest_int('max_depth', 1, 10, 1),
                 # "min_weight_fraction_leaf":trial.suggest_float(
                 #     "min_weight_fraction_leaf",0.0,0.5, step = 0.01
@@ -113,7 +113,7 @@ class RandForestModel:
             rf_regr.fit(X_split,np.ravel(y_split))
             y_pred = rf_regr.predict(X_val)
             result = self.optimization_metric.compute(y_val,y_pred) #type:ignore
-            if result is float:
+            if isinstance(result, float):
                 return result
             else:
                 raise Exception("Computing the chosen metric returns a non-floating number")
@@ -131,7 +131,7 @@ class RandForestModel:
     def fit_custom_model(self, 
             X_train:pd.DataFrame | pd.Series,
             y_train:pd.DataFrame | pd.Series,
-            **kwargs
+            hyperparameters: dict = {}
         )-> None:
         """
         Parameters
@@ -140,9 +140,11 @@ class RandForestModel:
             These are keyword arguments compatible with `RandomForestRegressor` model of
             Scikit-Learn, including hyperparameters.
         """
-        if kwargs is None:
-            kwargs = self.hyperparameters
-        self.custom_model = self.model(**kwargs, random_state=0)
+        if hyperparameters is None:
+            # if self.hyperparameters is None:
+            #     raise Exception("Hyperparameters have not been defined!")
+            hyperparameters = self.hyperparameters
+        self.custom_model = self.model(**hyperparameters, random_state=0)
         self.custom_model.fit(X_train,y_train)
 
 
