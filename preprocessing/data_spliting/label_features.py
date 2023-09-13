@@ -24,4 +24,4 @@ class LabelFeatSet:
         self.feature_columns = sorted(
             list(columns_set.difference(self.labels_names))
         )
-        return self.dataframe[self.labels_names]
+        return self.dataframe[self.feature_columns]
