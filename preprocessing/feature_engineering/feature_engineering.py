@@ -83,7 +83,7 @@ class FeatureEngineering(ABC):
             case "train":
                 resulting_df = self.train_set.dataframe
             case "test":
-                resulting_df = self.train_set.dataframe
+                resulting_df = self.test_set.dataframe
             case "feat_eng":
                 if self._dataframe is None:
                     raise Exception("Missing dataframe associated to FeatEngineering!")
