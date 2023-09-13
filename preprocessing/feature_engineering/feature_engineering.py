@@ -72,6 +72,12 @@ class FeatureEngineering(ABC):
         Parameters
         ----------
         `destiny_set: {"train","test", "feat_eng", "input"}`
+            If "train" / "test", we send the results to train_set / test_set dataframe.
+
+            If "feat_eng", we send the results to the dataframe initially associated to the
+            FeatureEngineering instance.
+
+            If "input", we output the inputed dataframe, expanded by the created features.
         """
         match destiny_set:
             case "train":
