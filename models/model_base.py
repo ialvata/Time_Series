@@ -7,6 +7,7 @@ class ModelBase(Protocol):
     # we cannot add the properties best_model, or custom_model, since for some models
     # they are simple attributes, for others they are properties.
     best_hyperparameters:dict
+    name:str
 
     def find_best(self,
         # we only need to include the input which has no default value.
