@@ -1,7 +1,7 @@
 
 import pandas as pd
 import numpy as np
-from typing import Callable
+from evaluation.metrics import MetricBase
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 import optuna
@@ -9,7 +9,9 @@ import matplotlib.figure
 
 
 class RandForestModel:
-    def __init__(self, optimization_metric: Callable) -> None:
+    def __init__(self, name: str = "RandForestModel",
+                 optimization_metric: MetricBase | None = None, 
+                 hyperparameters:dict = {}) -> None:
         """
         This class will use by default the RandomForestRegressor by Scikit-Learn.
 
@@ -20,13 +22,19 @@ class RandForestModel:
         `optimization_metric:Callable`
             This should be a function that returns a float. This function will be used for 
             hyperparameter optimization, in the `find_best` method.
-            Note: This function will be MINIMIZED during optimization. 
+            Note: This function will be MINIMIZED during optimization.
+        `hyperparameters: dict | None = None`
+            The entries of this dictionary should be compatible with the input for the
+            RandomForestRegressor model by Scikit-Learn.
         """
         self.model = RandomForestRegressor
         self.optimization_metric = optimization_metric
         self._best_model = None
         self._custom_model = None
         self.residuals_test_df = None
+        self.hyperparameters = hyperparameters
+        self.best_hyperparameters = {}
+        self.name = name
     
     @property
     def best_model(self):
@@ -61,16 +69,14 @@ class RandForestModel:
             y_train: pd.DataFrame | pd.Series,
             X_val:pd.DataFrame | pd.Series | None = None,
             y_val: pd.DataFrame | pd.Series | None = None,
-            num_obs_val: int = 10,
+            num_obs_val: int = 10, # This needs to be changed to a proportion
             show_progress_bar: bool = True,
             **kwargs
-        ):
+        )-> None:
         """
         Parameters
         ----------
         """
-        
-        
         if X_val is None:
             X_split = X_train[:-num_obs_val]
             X_val = X_train[-num_obs_val:]
@@ -81,15 +87,17 @@ class RandForestModel:
             y_val = y_train[-num_obs_val:]
         else:
             y_split = y_train
+        if self.optimization_metric is None:
+            raise Exception("No optimization metric for RandForestModel! Please set one.")
         # defining an objective function to be used in the Optuna optimization study
-        def objective(trial: optuna.Trial):     
+        def objective(trial: optuna.Trial) -> float:     
             params = {
                 'n_jobs': -1,
                 'criterion':"squared_error", # trial.suggest_categorical(
                     # 'criterion', 
                     # ["absolute_error","squared_error", "friedman_mse", "poisson"]
                 # ),
-                "n_estimators":500,
+                "n_estimators":100, #500 
                 "max_depth":trial.suggest_int('max_depth', 1, 10, 1),
                 # "min_weight_fraction_leaf":trial.suggest_float(
                 #     "min_weight_fraction_leaf",0.0,0.5, step = 0.01
@@ -106,7 +114,11 @@ class RandForestModel:
             rf_regr = RandomForestRegressor(**params, random_state=0)            
             rf_regr.fit(X_split,np.ravel(y_split))
             y_pred = rf_regr.predict(X_val)
-            return self.optimization_metric(y_val,y_pred)
+            result = self.optimization_metric.compute(y_val,y_pred) #type:ignore
+            if isinstance(result, float):
+                return result
+            else:
+                raise Exception("Computing the chosen metric returns a non-floating number")
         # creating optuna study to find best parameters
         study = optuna.create_study(direction="minimize")
         optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -116,21 +128,29 @@ class RandForestModel:
         # defining best model and fitting it.
         self.best_model = RandomForestRegressor(**(study.best_trial.params),random_state=0)
         self.best_model.fit(X_train,np.ravel(y_train))
+        self.best_hyperparameters = study.best_trial.params
 
     def fit_custom_model(self, 
-            X_df:pd.DataFrame | pd.Series,
-            y_df:pd.DataFrame | pd.Series,
-            **kwargs
-        ):
+            X_train:pd.DataFrame | pd.Series,
+            y_train:pd.DataFrame | pd.Series,
+            hyperparameters: dict = {}
+        )-> None:
         """
         Parameters
         ----------
         `kwargs`
             These are keyword arguments compatible with `RandomForestRegressor` model of
-            Scikit-Learn.
+            Scikit-Learn, including hyperparameters.
         """
-        self.custom_model = self.model(**kwargs, random_state=0)
-        self.custom_model.fit(X_df,y_df)
+        if hyperparameters is None:
+            # if self.hyperparameters is None:
+            #     raise Exception("Hyperparameters have not been defined!")
+            hyperparameters = self.hyperparameters
+        self.custom_model = self.model(**hyperparameters, random_state=0)
+        if y_train.shape[1] == 1:
+            self.custom_model.fit(X_train,np.ravel(y_train))
+        else:
+            self.custom_model.fit(X_train,y_train)
 
 
     def forecast(self,

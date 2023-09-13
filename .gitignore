@@ -165,3 +165,4 @@ try_outs.ipynb
 
 # Datasets
 datasets/london_smart_meters
+notebooks/*

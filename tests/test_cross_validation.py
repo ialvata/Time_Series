@@ -8,6 +8,7 @@ from preprocessing.feature_engineering.fourier import FourierFeature,SeasonLengt
 import pandas as pd
 from pathlib import Path
 from models.random_forest import RandForestModel
+from evaluation.cross_validation import CrossValidation, TuningOption
 from evaluation.metrics import MSE,MAE,MAPE,RMSE
 
 path_to_data=Path(
@@ -38,11 +39,13 @@ air_passengers_cleaned = air_passengers.dataframe
 ###############       Dataset splitting into Train and Test set           #####################
 rol_fold = ClassicalWindow(air_passengers_cleaned, labels_names=["value"],train_prop = 0.8)
 train_test_generator = rol_fold.create_folds()
-train_set,test_set = next(train_test_generator)
+
 
 ###############               Feature Engineering (TrainSet)              #####################
 # do we want to change in place in the train_set and test_set? This would be implicit...
-feat_eng = FeatureEngineering(dataframe=train_set, labels_names=["value"])
+# setting the dataset on which to create the features should be allowed to be done at a later
+# stage, such as inside the CrossValidation class.
+feat_eng = FeatureEngineering(labels_names=["value"])
 feat_eng.add_to_pipeline(
     features = [
         FourierFeature(
@@ -50,14 +53,24 @@ feat_eng.add_to_pipeline(
         )
     ]
 )
-feat_eng.create_features(destiny_set = "feat_eng")
-##############                    Model Instatiation                   #####################
-rf_model = RandForestModel(optimization_metric = MSE)
-rf_model.find_best(feat_eng.features, feat_eng.labels)
 
-##############                    Model Forecast                   #####################
-rf_model.forecast(feat_eng.features, use_best_model = True)
+#################                   Model Instantiation                 #######################
+rf_model_1 = RandForestModel(name = "rf_model_1", 
+                             optimization_metric = MSE, hyperparameters={"max_depth": 10})
+rf_model_2 = RandForestModel(name = "rf_model_2",
+                             optimization_metric = MSE, 
+                             hyperparameters={"max_features": "log2"})
 
+#################                    Cross-Validation                  ########################
+cross_val = CrossValidation(
+    models = [rf_model_1,rf_model_2],
+    metrics = [MSE, RMSE, MAPE, MAE],
+    data_generator = train_test_generator,
+    feat_eng = feat_eng, # in the future it will take a list of several different pipelines.
+)
+
+cross_val.evaluate(tuning_option = TuningOption.FIT_PARAM_ONLY)
+cross_val.show_results() # should return
 
 
 print("Olá")
