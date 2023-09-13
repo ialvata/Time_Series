@@ -55,11 +55,11 @@ feat_eng.add_to_pipeline(
 )
 
 #################                   Model Instantiation                 #######################
-rf_model_1 = RandForestModel(optimization_metric = MSE, max_depth = 10)
-rf_model_2 = RandForestModel(optimization_metric = MSE, max_features= "log2")
-
-#################                   Metrics Instantiation               #######################
-
+rf_model_1 = RandForestModel(name = "rf_model_1", 
+                             optimization_metric = MSE, hyperparameters={"max_depth": 10})
+rf_model_2 = RandForestModel(name = "rf_model_2",
+                             optimization_metric = MSE, 
+                             hyperparameters={"max_features": "log2"})
 
 #################                    Cross-Validation                  ########################
 cross_val = CrossValidation(
