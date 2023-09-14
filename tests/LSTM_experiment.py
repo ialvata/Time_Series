@@ -4,7 +4,7 @@ from pathlib import Path
 from pandas import DatetimeIndex,to_datetime
 from preprocessing.data_spliting.set_splitting import Split
 from preprocessing.roll_windows.roll_window_keras import KerasWindow
-from models.lstm import LSTMKeras
+from models.tensorflow.lstm import LSTMKeras
 
 
 
