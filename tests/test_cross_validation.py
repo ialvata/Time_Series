@@ -1,6 +1,6 @@
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.preprocess_base import Preprocess
-from preprocessing.data_loaders.roll_window_base import ClassicalWindow
+from preprocessing.data_loaders.classical_loader import ClassicalWindow
 from preprocessing.feature_engineering.feature_engineering import (
     FeatureEngineering
 )
