@@ -40,6 +40,7 @@ class TrialHistory:
         self.observation = observation
         self.trial = trial
         self.model_name = model_name
+        self.table_cv_res = None
     def __repr__(self) -> str:
         return f"TrialHistory(trial={self.trial}, model={self.model_name})"
 
@@ -118,6 +119,18 @@ class CrossValidation:
     def show_results(self, model_names:str | list[str] |None = None) -> pd.DataFrame:
         """
         """
+        cell_hover = {  # for row hover use <tr> instead of <td>
+            'selector': 'td:hover',
+            'props': [('background-color', 'darkgreen')]
+        }
+        index_names = {
+            'selector': '.index_name',
+            'props': 'font-style: italic; color: darkgrey; font-weight:normal;'
+        }
+        headers = {
+            'selector': 'th:not(.index_name)',
+            'props': 'background-color: grey; color: white;'
+        }
         if model_names is None:
             model_names = [model.name for model in self.models]
         if isinstance(model_names,str):
@@ -141,8 +154,8 @@ class CrossValidation:
             ) for model_name in model_names]for metric in self.metrics
         }
 
-        table_res = pd.DataFrame(metrics, index=model_names)
-        table_res.style.format(
-                '{:.4f}'
-        ).highlight_min(color='green')
-        return table_res
+        table_cv_res = pd.DataFrame(metrics, index=model_names)
+        self.table_cv_res = table_cv_res
+        return table_cv_res.style.set_table_styles(
+            [cell_hover, index_names, headers] # type: ignore
+        ).format('{:.4f}').highlight_min(color='green')
