@@ -1,7 +1,7 @@
 # Time_Series
 
 TODO:
-- Create separate PyTorch and TensorFlow subfolders in models folder. Develop them separately.
-- LGBM Model integration with Optuna.
-- Evaluation: Metrics, Cross-Validation.
+- [Add TFT model from pytorch_forecasting ](https://pytorch-forecasting.readthedocs.io/en/stable/tutorials/stallion.html)
+- Add Informer from HuggingFace package.
+- LGBModel integration with Optuna.
 - Avoid loss of Test data points when using certain feature engineering techniques.
