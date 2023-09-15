@@ -5,8 +5,7 @@ from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.stationarity.transformations import Difference,BoxCox
 import matplotlib.pyplot as plt
 from models.sarimax import SARIMAXModel,SARIMAXOrder, NonSeasonalOrder, SeasonalOrder
-from preprocessing.roll_windows.roll_window_base import ClassicalWindow
-
+from preprocessing.data_loaders.classical_loader import ClassicalLoader
 import pandas as pd
 from pathlib import Path
 
@@ -39,7 +38,7 @@ air_passengers.clean_dataframe()
 air_passengers_cleaned = air_passengers.dataframe
 
 ################ Dataset splitting into Train and Test set ######################
-rol_fold = ClassicalWindow(air_passengers_cleaned,train_prop = 0.8)
+rol_fold = ClassicalLoader(air_passengers_cleaned, labels_names=["value"],train_prop = 0.8)
 train_test_generator = rol_fold.create_folds()
 train_set,test_set = next(train_test_generator)
 

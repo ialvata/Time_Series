@@ -9,14 +9,14 @@ from collections.abc import Generator
 from  abc import ABC, abstractmethod
 from preprocessing.data_spliting.set_splitting import Split
 
-class RollWindow(ABC):
+class Loader(ABC):
     @abstractmethod
     def __init__(self, 
                  data_split: Split,
                  label_columns: list[str] | None = None):
         pass
 
-class ClassicalWindow(RollWindow):
+class ClassicalLoader(Loader):
     def __init__(
         self,
         dataframe:pd.DataFrame,
