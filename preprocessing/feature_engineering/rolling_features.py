@@ -62,7 +62,14 @@ class RollingFeature:
                 resulting test_set, while keeping the size of the test_set.
         """
         if auxiliary_df is not None:
-           dataframe = pd.concat([auxiliary_df[-self.num_rows_train:], dataframe], axis=0)
+           dataframe = pd.concat(
+               [auxiliary_df.iloc[
+                   -self.num_rows_train:,
+                   # we want to retrieve only the feature columns for which we want to create
+                   # the rolling features.
+                   [list(dataframe.columns).index(col) for col in self.columns]
+                ], dataframe],
+                axis=0)
         appended_lags = []
         for period in self.periods:
             rolling_df = dataframe[self.columns]
