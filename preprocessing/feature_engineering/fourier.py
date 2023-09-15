@@ -90,7 +90,8 @@ class FourierFeature:
             cos_array[:, n - 1] = np.cos((2 * np.pi * seasonal_cycle * n) / cycle_len)
         return np.hstack([sin_array, cos_array])
 
-    def create_features(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+    def create_features(self, dataframe: pd.DataFrame,
+                        auxiliary_df: pd.DataFrame | None = None) -> pd.DataFrame:
             if not isinstance(dataframe.index,pd.DatetimeIndex):
                     raise Exception(
                         "Please convert (internal) DataFrame Index to a DatetimeIndex!"

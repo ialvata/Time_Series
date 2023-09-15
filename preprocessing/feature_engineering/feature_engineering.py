@@ -31,6 +31,8 @@ class FeatureEngineering(ABC):
         self.scaler = scaler
         self.labels_names = sorted(labels_names)
         self.pipeline = []
+        self._train_set = None
+        self._test_set = None
 
     @property
     def dataframe(self) -> pd.DataFrame:
@@ -59,12 +61,31 @@ class FeatureEngineering(ABC):
         )
         return self.dataframe[self.feature_columns]
     
+    @property
+    def train_set(self) -> LabelFeatSet:
+        if isinstance(self._train_set, LabelFeatSet):
+            return self._train_set
+        else:
+            raise Exception(
+                "The train_set has not been set correctly! "
+                "Please use FeatureEngineering method: set_datasets."
+            )
+    @property
+    def test_set(self) -> LabelFeatSet:
+        if isinstance(self._test_set, LabelFeatSet):
+            return self._test_set
+        else:
+            raise Exception(
+                "The test_set has not been set correctly! "
+                "Please use FeatureEngineering method: set_datasets."
+            )
+
     def add_to_pipeline(self, features: list[FeatureBase]) -> None:
         self.pipeline = self.pipeline + features
 
     def set_datasets(self, train_set: pd.DataFrame, test_set: pd.DataFrame) -> None:
-        self.train_set = LabelFeatSet(train_set, labels_names=self.labels_names)
-        self.test_set = LabelFeatSet(test_set, labels_names=self.labels_names)
+        self._train_set = LabelFeatSet(train_set, labels_names=self.labels_names)
+        self._test_set = LabelFeatSet(test_set, labels_names=self.labels_names)
 
     def create_features(self, destiny_set: str, dataframe: pd.DataFrame | None = None
     ) -> pd.DataFrame | None:
@@ -79,11 +100,13 @@ class FeatureEngineering(ABC):
 
             If "input", we output the inputed dataframe, expanded by the created features.
         """
+        auxiliary_df = None
         match destiny_set:
             case "train":
                 resulting_df = self.train_set.dataframe
             case "test":
                 resulting_df = self.test_set.dataframe
+                auxiliary_df = self.train_set.dataframe
             case "feat_eng":
                 if self._dataframe is None:
                     raise Exception("Missing dataframe associated to FeatEngineering!")
@@ -96,7 +119,9 @@ class FeatureEngineering(ABC):
                 raise Exception("Invalid option for destiny_set!")
         for feature in self.pipeline:
             feature:FeatureBase
-            resulting_df = feature.create_features(resulting_df)
+            resulting_df = feature.create_features(
+                dataframe=resulting_df, auxiliary_df = auxiliary_df
+            )
         match destiny_set:
             case "train":
                 self.train_set.dataframe = resulting_df
