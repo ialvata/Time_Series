@@ -16,7 +16,7 @@ class RollWindow(ABC):
                  label_columns: list[str] | None = None):
         pass
 
-class ClassicalWindow(RollWindow):
+class ClassicalLoader(RollWindow):
     def __init__(
         self,
         dataframe:pd.DataFrame,
