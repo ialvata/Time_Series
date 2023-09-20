@@ -1,6 +1,6 @@
 from preprocessing.preprocess_input_base import PreprocessInput
 from preprocessing.preprocess_base import Preprocess
-from preprocessing.roll_windows.roll_window_base import ClassicalWindow
+from preprocessing.data_loaders.classical_loader import ClassicalLoader
 from preprocessing.feature_engineering.feature_engineering import (
     FeatureEngineering
 )
@@ -36,7 +36,7 @@ air_passengers.clean_dataframe()
 air_passengers_cleaned = air_passengers.dataframe
 
 ###############       Dataset splitting into Train and Test set           #####################
-rol_fold = ClassicalWindow(air_passengers_cleaned, labels_names=["value"],train_prop = 0.8)
+rol_fold = ClassicalLoader(air_passengers_cleaned, labels_names=["value"],train_prop = 0.8)
 train_test_generator = rol_fold.create_folds()
 train_set,test_set = next(train_test_generator)
 
