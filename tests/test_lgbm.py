@@ -7,7 +7,7 @@ from preprocessing.feature_engineering.feature_engineering import (
 from preprocessing.feature_engineering.fourier import FourierFeature,SeasonLength
 import pandas as pd
 from pathlib import Path
-from models.random_forest import RandForestModel
+from models.lightgbm import LGBMModel
 from evaluation.metrics import MSE,MAE,MAPE,RMSE
 
 path_to_data=Path(
@@ -52,7 +52,7 @@ feat_eng.add_to_pipeline(
 )
 feat_eng.create_features(destiny_set = "feat_eng")
 ##############                    Model Instatiation                   #####################
-rf_model = RandForestModel(optimization_metric = MSE)
+rf_model = LGBMModel(optimization_metric = MSE)
 rf_model.find_best(feat_eng.features, feat_eng.labels)
 
 ##############                    Model Forecast                   #####################
