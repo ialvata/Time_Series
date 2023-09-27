@@ -25,7 +25,7 @@ This is a repo containing a simple library for Time Series data problems, which 
 
 
 ## TODO
-- Multiple time steps integration for random forests based models.
+- Multiple time steps forecasting for random forests based models.
 - Add folder with example notebooks.
 - N-HiTS  integration.
 - Add Informer from HuggingFace package. (I don't have enough memory to put the model into GPU memory. Google Colab?)
