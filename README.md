@@ -17,9 +17,9 @@ This is a repo containing a simple library for Time Series data problems, which 
 - Object oriented API, with a very low learning fixed cost.
 - Composable elements, which can be assembled to create a Time Series data pipeline.
 - Feature Engineering, like explicit time embeddings (EWMA, Fourier, etc).
-- Label transformations for stationarization, such as differencing.
+- Label transformations for stationarity, such as differencing and Box-Cox transform.
 - Outlier detection algorithms (Isolation Forest Detection, Inter-Quartile Range, etc).
-- Statistical tests implemented for stationarity.
+- Statistical tests implemented for checking stationarity.
 - Both classical and ML time series models wrappers for seamless integration.
 - Label/target prediction performance evaluation through Cross Validation.
 
