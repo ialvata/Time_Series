@@ -27,8 +27,11 @@ This is a repo containing a simple library for Time Series data problems, which 
 ## TODO
 - Multiple time steps forecasting for random forests based models.
 - Add folder with example notebooks.
-- N-HiTS  integration.
-- Add Informer from HuggingFace package. (I don't have enough memory to put the model into GPU memory. Google Colab?)
-- [Add TFT model from pytorch_forecasting ](https://pytorch-forecasting.readthedocs.io/en/stable/tutorials/stallion.html)
+- Add Forecast Bias and Normalized Deviation metrics.
+- [Add TFT model from PyTorch Forecasting](https://pytorch-forecasting.readthedocs.io/en/stable/tutorials/stallion.html)
+- N-HiTS  integration (using PyTorch Forecasting).
 - Add automated tests that prove algos are working.
+- Add Informer from HuggingFace package. (I don't have enough memory to put the model into GPU memory. Google Colab?)
+
+
 
