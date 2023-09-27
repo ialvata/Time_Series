@@ -7,7 +7,6 @@
 
 
 # Time_Series
-https://github.com/ialvata/ialvata.github.io/blob/main/static/images/time_series.jpg
 
 ![A nice picture of a Time Series.](https://github.com/ialvata/ialvata.github.io/blob/main/static/images/time_series.jpg "A nice picture of a Time Series.")
 
