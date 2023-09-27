@@ -1,7 +1,26 @@
-# Time_Series
 
-TODO:
-- LGBModel integration with Optuna.
+[GitHub.io Personal Page](https://ialvata.github.io/)
+### Badge Overview
+
+| **Open Source** | [![BSD 3-clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)]()
+|---|---|
+
+
+# Time_Series
+This is a repo containing a simple library for Time Series data problems, which tries to aggregate all steps of the analysis, from data preprocessing, to label/target prediction performance assessment, and graphical presentation. 
+
+## Main Features
+- Object oriented API, with a very low learning fixed cost.
+- Composable elements, which can be assembled to create a Time Series data pipeline.
+- Feature Engineering, like explicit time embeddings (EWMA, Fourier, etc).
+- Label transformations for stationarization, such as differencing.
+- Statistical tests implementated for stationarization.
+- Both classical and ML time series models wrappers for seamless integration.
+- Label/target prediction performance evaluation through Cross Validation.
+
+
+## TODO
+- Multiple time steps integration for random forests based models.
 - N-BEATS  integration.
 - Add Informer from HuggingFace package. (I don't have enough memory to put the model into GPU memory...)
 - [Add TFT model from pytorch_forecasting ](https://pytorch-forecasting.readthedocs.io/en/stable/tutorials/stallion.html)
