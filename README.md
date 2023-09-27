@@ -18,15 +18,16 @@ This is a repo containing a simple library for Time Series data problems, which 
 - Composable elements, which can be assembled to create a Time Series data pipeline.
 - Feature Engineering, like explicit time embeddings (EWMA, Fourier, etc).
 - Label transformations for stationarization, such as differencing.
-- Statistical tests implementated for stationarization.
+- Statistical tests implemented for stationarization.
 - Both classical and ML time series models wrappers for seamless integration.
 - Label/target prediction performance evaluation through Cross Validation.
 
 
 ## TODO
 - Multiple time steps integration for random forests based models.
+- Add folder with example notebooks.
 - N-BEATS  integration.
-- Add Informer from HuggingFace package. (I don't have enough memory to put the model into GPU memory...)
+- Add Informer from HuggingFace package. (I don't have enough memory to put the model into GPU memory. Google Colab?)
 - [Add TFT model from pytorch_forecasting ](https://pytorch-forecasting.readthedocs.io/en/stable/tutorials/stallion.html)
 - Add automated tests that prove algos are working.
 
